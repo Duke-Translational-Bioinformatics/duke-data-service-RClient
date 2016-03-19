@@ -1,0 +1,59 @@
+# AllGenerics.R
+# Setting all Generic Functions
+# Author: Ben Neely <nigelneely@gmail.com>
+#############################################
+setGeneric(name=".setConfig",
+           def=function(Object)
+           {
+             standardGeneric(".getConfig")
+           }
+)
+setGeneric(name=".saveConfig",
+           def=function(Object)
+           {
+             standardGeneric(".setConfig")
+           }
+)
+setGeneric(name=".readConfig",
+           def=function(Object)
+           {
+             standardGeneric(".readConfig")
+           }
+)
+setGeneric(name=".deleteConfig",
+           def=function(Object)
+           {
+             standardGeneric(".deleteConfig")
+           }
+)
+setGeneric(name=".get",
+           def=function(Object)
+           {
+             standardGeneric(".get")
+           }
+)
+setGeneric(name=".post",
+           def=function(Object)
+           {
+             standardGeneric(".post")
+           }
+)
+setGeneric(name=".put",
+           def=function(Object)
+           {
+             standardGeneric(".put")
+           }
+)
+setGeneric(name=".delete",
+           def=function(Object)
+           {
+             standardGeneric(".delete")
+           }
+)
+setGeneric(name="ddsprint",
+           def=function(Object)
+           {
+             standardGeneric("ddsprint")
+           }
+)
+
