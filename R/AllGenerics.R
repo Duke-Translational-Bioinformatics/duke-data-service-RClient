@@ -5,13 +5,13 @@
 setGeneric(name=".setConfig",
            def=function(Object)
            {
-             standardGeneric(".getConfig")
+             standardGeneric(".setConfig")
            }
 )
 setGeneric(name=".saveConfig",
            def=function(Object)
            {
-             standardGeneric(".setConfig")
+             standardGeneric(".saveConfig")
            }
 )
 setGeneric(name=".readConfig",
