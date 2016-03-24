@@ -1,15 +1,14 @@
-Package: ddsclientR
-Type: Package
+Package: ddsRClient
+ype: Package
 Title: R programmatic client to the duke-data-service
 Version: 0.1
 Date: 2016-03-15
 Authors@R: person("Benjamin", "Neely", email = "nigelneely@gmail.com", role = c("aut", "cre"))
 Description: The Duke Data Service is a rich platform for creating, storing, and attaching provenance to research files.
-This package makes interacting with the RESTFul API easy and enjoyable by way of using native R functions.
 License: GPL-3
 LazyData: TRUE
 Depends:
     R (>= 3.0.0)
 Imports:
     httr
-URL: https://github.com/Duke-Translational-Bioinformatics/duke-data-service-RClient
+URL: https://github.com/Duke-Translational-Bioinformatics/ddsRClient

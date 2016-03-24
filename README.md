@@ -1,10 +1,10 @@
 # duke-data-service-RClient
-R programmatic client to the duke-data-service. The actual package name is ddsclientR.
+The official repo for the ddsRClient package - the R programmatic client to the duke-data-service. 
 
 ![mail](images/logo2.png)
 
 ## Installation
-To install the R package ddsclientR, follow one of the methods below.
+To install the R package ddsRClient, follow one of the methods below.
 ### From GitHub  
 Start by installing the package:  
 ```
@@ -13,6 +13,6 @@ devtools::install_github("Duke-Translational-Bioinformatics/duke-data-service-RC
 ```
 Load the package for use:  
 ```
-library(ddsclientR)
+library(ddsRClient)
 ```
 All functions and data available through the ddsclientR package are ready for use!
