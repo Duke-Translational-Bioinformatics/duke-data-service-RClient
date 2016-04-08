@@ -1,4 +1,4 @@
-# cache.R
+# config.R
 # Login to Duke Data Service
 # Author: Ben Neely <nigelneely@gmail.com>
 #############################################
@@ -11,8 +11,8 @@ setClass(
     ondisk           = "character",
     sessionfile      = "character",
     username         = "character",
-    firstname        = "character",
-    lastname         = "character",
+    first_name        = "character",
+    last_name         = "character",
     userid           = "character",
     user_api_token   = "character",
     url_api_token    = "character",
@@ -27,12 +27,12 @@ setClass(
     ondisk           = "~/.ddsclientR",
     sessionfile      = ".session",
     username         = "",
-    firstname        = "",
-    lastname         = "",
+    first_name        = "",
+    last_name         = "",
     userid           = "",
     user_api_token   = "",
     url_api_token    = "",
-    url              = "https://dukeds-dev.herokuapp.com",
+    url              = "",
     caching          = TRUE,
     sa_key           = "",
     sa_api_token     = ""
@@ -57,13 +57,13 @@ setMethod(f=".saveConfig",
 sa_key=%s\r
 sa_api_token=%s\r
 username=%s\r
-firstname=%s\r
-lastname=%s\r
+first_name=%s\r
+last_name=%s\r
 userid=%s\r
 user_api_token=%s\r
 url_api_token=%s",
                     Object@url,Object@sa_key,Object@sa_api_token,Object@username,
-                    Object@firstname,Object@lastname,Object@userid,Object@user_api_token,
+                    Object@first_name,Object@last_name,Object@userid,Object@user_api_token,
                     Object@url_api_token);
             #Create our configfile
             write(ini,file.path(Object@ondisk,Object@sessionfile),sep="\r");

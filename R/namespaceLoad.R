@@ -17,7 +17,7 @@
   {
     # low.speed.time increased to 600 to fix SYNR-949
     .setCache("curlOpts", list(low.speed.time=600, low.speed.limit=1, connecttimeout=300, followlocation=TRUE, ssl.verifypeer=TRUE, verbose = FALSE, cainfo=file.path(libname, pkgname)))
-    .setCache("curlHeader", c('Content-Type'="application/json; charset=utf-8", Accept = "application/json", "Accept-Charset"="utf-8"))
+    .setCache("curlHeader", c('Content-Type'="application/json; charset=utf-8", 'Accept' = "application/json", "Accept-Charset"="utf-8"))
     .setCache("sessionRefreshDurationMin", 1440)
     .setCache("anonymous", FALSE)
     .setCache("downloadSuffix", "unpacked")
@@ -25,4 +25,5 @@
     # this is the maximum number of times a web request will be tried when there is a temporary outage.  Must be >0
     .setCache("webRequestMaxTries", 10)
     .setCache("webRequestMaxRedirects", 3)
+    .setCache("defaultEndpoint","https://dukeds-dev.herokuapp.com")
   }
