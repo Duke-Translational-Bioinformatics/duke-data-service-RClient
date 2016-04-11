@@ -14,12 +14,13 @@ setClass(
     first_name        = "character",
     last_name         = "character",
     userid           = "character",
-    user_api_token   = "character",
+    user_key   = "character",
     url_api_token    = "character",
     url              = "character",
     caching          = "logical",
     sa_key           = "character",
-    sa_api_token     = "character"
+    sa_api_token     = "character",
+    sa_api_token_expires = "character"
   ),
 
   # Set the default values for the slots. (optional)
@@ -30,12 +31,13 @@ setClass(
     first_name        = "",
     last_name         = "",
     userid           = "",
-    user_api_token   = "",
+    user_key   = "",
     url_api_token    = "",
     url              = "",
     caching          = TRUE,
     sa_key           = "",
-    sa_api_token     = ""
+    sa_api_token     = "",
+    sa_api_token_expires = ""
   )
   # Optional validity function
   #   validity=function(object)
@@ -56,14 +58,15 @@ setMethod(f=".saveConfig",
 \r
 sa_key=%s\r
 sa_api_token=%s\r
+sa_api_token_expires=%s\r
 username=%s\r
 first_name=%s\r
 last_name=%s\r
 userid=%s\r
-user_api_token=%s\r
+user_key=%s\r
 url_api_token=%s",
-                    Object@url,Object@sa_key,Object@sa_api_token,Object@username,
-                    Object@first_name,Object@last_name,Object@userid,Object@user_api_token,
+                    Object@url,Object@sa_key,Object@sa_api_token,Object@sa_api_token_expires,Object@username,
+                    Object@first_name,Object@last_name,Object@userid,Object@user_key,
                     Object@url_api_token);
             #Create our configfile
             write(ini,file.path(Object@ondisk,Object@sessionfile),sep="\r");

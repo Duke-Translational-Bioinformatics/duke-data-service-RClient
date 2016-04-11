@@ -19,6 +19,16 @@
     cache@env[[key]] <- value
   }
 
+.printCache <-
+  function()
+  {
+    cache <- new("GlobalCache")
+    attributes <- ls(cache)
+   a= sapply(attributes, function(x) {
+      c(eval(parse(text=paste0(".getCache('",x,"')"))))
+    })
+   return(a)
+  }
 .setCacheConfigObject <-
   function(config)
   {

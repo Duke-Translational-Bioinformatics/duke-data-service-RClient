@@ -25,5 +25,5 @@
     # this is the maximum number of times a web request will be tried when there is a temporary outage.  Must be >0
     .setCache("webRequestMaxTries", 10)
     .setCache("webRequestMaxRedirects", 3)
-    .setCache("defaultEndpoint","https://dukeds-dev.herokuapp.com")
+    .setCache("defaultUrl","https://dukeds-dev.herokuapp.com")
   }
