@@ -8,7 +8,7 @@
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 ddslogin <- function(url=NA, rememberMe=TRUE) {
   a <- new("Config")
-  try(.setConfig(a),silent=TRUE)
+  try(a<-.setConfig(a),silent=TRUE)
   .setCacheConfigObject(a)
   if (.getCache('url')=='') {.setCache('url',.getCache('defaultUrl'))}
   # After reading config, we need to determine how we're going to login:

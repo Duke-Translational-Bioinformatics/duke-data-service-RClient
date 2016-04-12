@@ -1,7 +1,14 @@
-# ddsRequest.R
-# Generic Function to interact with DDS
-# Author: Ben Neely <nigelneely@gmail.com>
-#############################################
+#' DDS RESTful API wrapper function.
+#'
+#' @param url The URL to a valid DDS portal (PROD,DEV,UATEST).
+#' @param endpoint The DDS endpoint to call out to
+#' @param body_list Takes an R list to supply as the body of a call
+#' @param customrequest One of the following ('GET','PUT','POST')
+#' @param httpheader Takes an R list to supply as a modified header of a call
+#' @return The sum of \code{x} and \code{y}.
+#' @examples
+#' ddslogin()
+#' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 
 ddsRequest<-function(
   url=.getCache('url'), # omitting the endpoint
@@ -11,6 +18,7 @@ ddsRequest<-function(
   httpheader=.getCache('curlHeader'), # the headers
   curlHandle # the curl handle
   ) {
+ message(sprintf("%s %s progress:",customrequest,endpoint))
  if (customrequest=="GET") {
   r = GET(paste0(url,'/api/v1',endpoint),
           add_headers(httpheader),
