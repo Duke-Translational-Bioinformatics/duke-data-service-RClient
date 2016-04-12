@@ -7,14 +7,16 @@
 #' ddslogin()
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 ddslogin <- function(url=NA, rememberMe=TRUE) {
+  ddslogout();
   a <- new("Config")
   # What url should we use?
   #################################################################################################
   if (!is.na(url)) {
     #try to match url provided to that of options from config to bypass user choice
     .setCache('url',url)
+  } else {
+    .setCache('url',.getCache('defaultUrl'))
   }
-  if (.getCache('url')=='') {.setCache('url',.getCache('defaultUrl'))}
   # If the chosen URL is saved on a config, use it
   #################################################################################################
   try(a<-.setConfig(a),silent=TRUE)
@@ -46,6 +48,17 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
   #################################################################################################
   message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))
   assign("curlheader", c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')), envir = .GlobalEnv)
+}
+
+#' Function to sign out of DDS. This amounts to removing the authorization jwt.
+#'
+#' @examples
+#' ddslogout()
+ddslogout <- function(){
+  .setCache('sa_api_token','')
+  .setCache('sa_api_token_expires','')
+  .setCache('url','')
+  curlheader = .getCache('curlHeader')
 }
 
 .getUserInformation <- function(api_token=.getCache('sa_api_token')) {

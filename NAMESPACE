@@ -4,5 +4,6 @@ import(httr)
 ## S3 utility methods
 export(
   "ddslogin",
+  "ddslogout",
   "ddsRequest"
   )
