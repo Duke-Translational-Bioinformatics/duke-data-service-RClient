@@ -8,19 +8,18 @@
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 ddslogin <- function(url=NA, rememberMe=TRUE) {
   a <- new("Config")
-  try(a<-.setConfig(a),silent=TRUE)
-  .setCacheConfigObject(a)
-  if (.getCache('url')=='') {.setCache('url',.getCache('defaultUrl'))}
-  # After reading config, we need to determine how we're going to login:
-  # we can either loging through a url_api_token or a sa_api_token
-  # We'd rather have a sa_api_token because that's it's purpose and lasts longer
-  # so we start there, then search for url_api_token, then finally move to getting a url_api_token
   # What url should we use?
   #################################################################################################
   if (!is.na(url)) {
     #try to match url provided to that of options from config to bypass user choice
-    .setCache('url')=url
+    .setCache('url',url)
   }
+  if (.getCache('url')=='') {.setCache('url',.getCache('defaultUrl'))}
+  # If the chosen URL is saved on a config, use it
+  #################################################################################################
+  try(a<-.setConfig(a),silent=TRUE)
+  .setCacheConfigObject(a)
+
   # We need a valid JWT to be considered "logged in" - three ways to get there...
   #################################################################################################
   if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) > as.integer(as.POSIXct( Sys.time() ))))   {

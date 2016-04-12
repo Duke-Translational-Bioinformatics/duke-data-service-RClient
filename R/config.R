@@ -110,6 +110,8 @@ setMethod(f=".setConfig",
           definition=function(Object)
           {
             config_list = .readConfig(Object);
+            indx <- which(.getCache('url') %in% config_list$url$V2)
+            if (length(indx)>0) {
             .urls_list = unlist(lapply(seq_along(config_list$url$V2),function(x) paste0(x,') ',config_list$url$V2[x],'\n')))
             msg1<-paste0(c("You've cached at least one url in the past.\n",
                            .urls_list,
@@ -124,6 +126,10 @@ setMethod(f=".setConfig",
             INI.list <- list()
             eval(parse(text=ToParse))
             return(Object)
+            } else {
+              Object@url = .getCache('url')
+              return(Object)
+            }
           }
 )
 
