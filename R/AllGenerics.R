@@ -63,3 +63,9 @@ setGeneric(name=".createINIText",
              standardGeneric(".createINIText")
            }
 )
+setGeneric(name=".loadConfigFromCache",
+           def=function(Object)
+           {
+             standardGeneric(".loadConfigFromCache")
+           }
+)
