@@ -26,7 +26,27 @@ To learn more about any of these specific functions use the help menu:
 ```
 ?ddslogin
 ```
-### Example workflow to create a new project in UATEST environment
+### Example: workflow to login to various DDS platforms
+If the url parameter of `ddslogin` is not used, it will default to our development
+environment. Otherwise, pass other portal platform URLs to login to other systems
+as such
+```
+#development
+ddslogin()
+
+#UATEST
+ddslogin(url='https://dukeds-uatest.herokuapp.com')
+
+#PRODUCTION
+ddslogin(url='https://dukeds.herokuapp.com')
+
+#After a user has logged into these systems once. The url parameter is essentially
+#not needed if doing interactive programming as the client will present the
+#platforms that are saved, so all one needs to do is:
+ddslogin()
+```
+
+### Example: Workflow to create a new project in UATEST environment
 ```
 library(ddsRClient)
 ddslogin(url='https://dukeds-uatest.herokuapp.com')
