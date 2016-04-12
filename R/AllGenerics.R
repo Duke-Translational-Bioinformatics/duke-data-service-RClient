@@ -20,6 +20,7 @@ setGeneric(name=".readConfig",
              standardGeneric(".readConfig")
            }
 )
+
 setGeneric(name=".deleteConfig",
            def=function(Object)
            {
@@ -56,4 +57,9 @@ setGeneric(name="ddsprint",
              standardGeneric("ddsprint")
            }
 )
-
+setGeneric(name=".createINIText",
+           def=function(Object)
+           {
+             standardGeneric(".createINIText")
+           }
+)

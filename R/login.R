@@ -1,8 +1,12 @@
-# login.R
-# Login to Duke Data Service
-# Author: Ben Neely <nigelneely@gmail.com>
-#############################################
-login <- function(url=NA, rememberMe=TRUE) {
+#' Login function to DDS environment.
+#'
+#' @param url The URL to a valid DDS portal (PROD,DEV,UATEST).
+#' @param rememberME A logical indicating if the session login information should be stored later.
+#' @return The sum of \code{x} and \code{y}.
+#' @examples
+#' ddslogin()
+#' ddslogin(url='https://dukeds-uatest.herokuapp.com')
+ddslogin <- function(url=NA, rememberMe=TRUE) {
   a <- new("Config")
   try(.setConfig(a),silent=TRUE)
   .setCacheConfigObject(a)
@@ -17,25 +21,35 @@ login <- function(url=NA, rememberMe=TRUE) {
     #try to match url provided to that of options from config to bypass user choice
     .setCache('url')=url
   }
-  # What token should we use for auth?
+  # We need a valid JWT to be considered "logged in" - three ways to get there...
   #################################################################################################
-  if (.getCache('sa_api_token') != "") {
-
-
+  if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) > as.integer(as.POSIXct( Sys.time() ))))   {
+    #nothing needs to be done, we have valid token and it hasn't expired
+  } else if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() )))) {
+    #refreshing our sa_api_token
+    .getSaApiToken()
   } else {
     .setCache('url_api_token',.scrapesessioncookie(.getCache('url')));
-    .getUserInformation();
+    .getUserInformation(api_token=.getCache('url_api_token'));
     #Since we don't have a sa_api_token and this is the preferred connection method, we'll step through
     #that workflow to obtain a sa_api_token
     #Let's add this information to our cache key 'curlHeader'
-    .getSaApiToken()
-
-
+    .getSaApiToken(url_api_token=.getCache('url_api_token'))
   }
-
-
+  #We're now "logged in", if rememberMe is true, we need to write out to the config file
+  #################################################################################################
+  if (rememberMe) {
+    #update our config option to reflect what our cache now holds
+    a=.loadConfigFromCache(a)
+    .saveConfig(a)
+  }
+  #Welcome the user and let them know they're logged in and remind them which system they are using
+  #################################################################################################
+  message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))
+  assign("curlheader", c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')), envir = .GlobalEnv)
 }
-.getUserInformation <- function(api_token=.getCache('url_api_token')) {
+
+.getUserInformation <- function(api_token=.getCache('sa_api_token')) {
   r = ddsRequest(endpoint='/current_user',
                  httpheader=c(.getCache('curlHeader'),'Authorization'=api_token))
   #set some cached attributes
@@ -45,7 +59,7 @@ login <- function(url=NA, rememberMe=TRUE) {
   .setCache('userid',r$body$id)
 }
 
-.getSaApiToken <- function(url_api_token=.getCache('url_api_token')){
+.getSaApiToken <- function(url_api_token=.getCache('sa_api_token')){
   #Check if there is already a user key if not generate one
   #########################################################
   if (.getCache('user_key')=="") {
@@ -81,16 +95,15 @@ login <- function(url=NA, rememberMe=TRUE) {
         .setCache('sa_key',r$body$key)
       }
     }
-    #finally get the sa api token
-    body = list(agent_key=.getCache('sa_key'),
-                user_key=.getCache('user_key'))
-    r = ddsRequest(customrequest="POST",
-                   endpoint='/software_agents/api_token',
-                   body_list=body,
-                   httpheader=c(.getCache('curlHeader')))
-    .setCache('sa_api_token',r$body$api_token)
-    .setCache('sa_api_token_expires',r$body$expires_on)
   }
+  #finally get the sa api token
+  body = list(agent_key=.getCache('sa_key'),
+              user_key=.getCache('user_key'))
+  r = ddsRequest(customrequest="POST",
+                 endpoint='/software_agents/api_token',
+                 body_list=body)
+  .setCache('sa_api_token',r$body$api_token)
+  .setCache('sa_api_token_expires',r$body$expires_on)
 }
 
 

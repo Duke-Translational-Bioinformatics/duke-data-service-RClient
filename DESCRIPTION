@@ -4,7 +4,8 @@ Title: R programmatic client to the duke-data-service
 Version: 0.1
 Date: 2016-03-15
 Authors@R: person("Benjamin", "Neely", email = "nigelneely@gmail.com", role = c("aut", "cre"))
-Description: The Duke Data Service is a rich platform for creating, storing, and attaching provenance to research files.
+Description: The Duke Data Service is a rich platform for creating, storing, and
+    attaching provenance to research files.
 License: GPL-3
 LazyData: TRUE
 Depends:
@@ -12,3 +13,4 @@ Depends:
 Imports:
     httr
 URL: https://github.com/Duke-Translational-Bioinformatics/ddsRClient
+RoxygenNote: 5.0.1

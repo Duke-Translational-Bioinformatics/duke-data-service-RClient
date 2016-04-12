@@ -11,13 +11,12 @@ setClass(
     ondisk           = "character",
     sessionfile      = "character",
     username         = "character",
-    first_name        = "character",
-    last_name         = "character",
+    first_name       = "character",
+    last_name        = "character",
     userid           = "character",
-    user_key   = "character",
-    url_api_token    = "character",
+    user_key         = "character",
     url              = "character",
-    caching          = "logical",
+    sa_id            = "character",
     sa_key           = "character",
     sa_api_token     = "character",
     sa_api_token_expires = "character"
@@ -28,13 +27,12 @@ setClass(
     ondisk           = "~/.ddsclientR",
     sessionfile      = ".session",
     username         = "",
-    first_name        = "",
-    last_name         = "",
+    first_name       = "",
+    last_name        = "",
     userid           = "",
-    user_key   = "",
-    url_api_token    = "",
+    user_key         = "",
     url              = "",
-    caching          = TRUE,
+    sa_id            = "",
     sa_key           = "",
     sa_api_token     = "",
     sa_api_token_expires = ""
@@ -51,27 +49,38 @@ setClass(
 
 setMethod(f=".saveConfig",
           signature="Config",
-          definition=function(Object)
-          {
-            if (!dir.exists(Object@ondisk)) {dir.create(Object@ondisk)}
-            ini = sprintf("[%s]\r
-\r
-sa_key=%s\r
-sa_api_token=%s\r
-sa_api_token_expires=%s\r
-username=%s\r
-first_name=%s\r
-last_name=%s\r
-userid=%s\r
-user_key=%s\r
-url_api_token=%s",
-                    Object@url,Object@sa_key,Object@sa_api_token,Object@sa_api_token_expires,Object@username,
-                    Object@first_name,Object@last_name,Object@userid,Object@user_key,
-                    Object@url_api_token);
+          definition=function(Object){
+            ################################################
+            # New Config file
+            ################################################
+            if (!dir.exists(Object@ondisk)) {
+              dir.create(Object@ondisk)
+              ini=.createINIText(Object);
             #Create our configfile
             write(ini,file.path(Object@ondisk,Object@sessionfile),sep="\r");
-          }
-)
+            }
+            ################################################
+            # Config file already exist, treading carefully
+            ################################################
+            else {
+              config_list<-.readConfig(Object)
+              indx <- which(Object@url %in% config_list$url$V2)
+              #This config file already contains information about this url
+              if (length(indx)>0) {
+                config_list$sa_api_token$V2[indx]=Object@sa_api_token
+                config_list$sa_api_token_expires$V2[indx]=Object@sa_api_token_expires
+                ini = config_list_to_ini(config_list)
+              } else {
+                #This is a new url so we can proceed by appending
+                ini1 = .createINIText(Object);
+                ini2 = config_list_to_ini(config_list);
+                ini = paste(c(ini2,ini1),collapse="\r")
+
+              }
+            #Create our configfile
+            write(ini,file.path(Object@ondisk,Object@sessionfile),sep="\r");
+            }
+})
 
 setMethod(f=".readConfig",
           signature="Config",
@@ -117,3 +126,57 @@ setMethod(f=".setConfig",
             return(Object)
           }
 )
+
+setMethod(f=".loadConfigFromCache",
+          signature="Config",
+          definition=function(Object)
+          {
+            names <- slotNames(Object)
+            for (i in 1:length(names)) {
+              eval(parse(text=paste0("Object@",names[i],"='",.getCache(names[i]),"'")))
+              }
+          return(Object)
+          }
+)
+
+setMethod(f=".createINIText",
+          signature="Config",
+          definition=function(Object)
+          {
+ini = sprintf("[%s]\r
+\r
+sa_id=%s\r
+sa_key=%s\r
+sa_api_token=%s\r
+sa_api_token_expires=%s\r
+username=%s\r
+first_name=%s\r
+last_name=%s\r
+userid=%s\r
+user_key=%s\r",
+Object@url,Object@sa_id,Object@sa_key,Object@sa_api_token,Object@sa_api_token_expires,Object@username,
+Object@first_name,Object@last_name,Object@userid,Object@user_key);
+return(ini);
+})
+
+config_list_to_ini <- function(config_list) {
+  temp = list();
+  for (i in 1:length(config_list$url$V2)) {
+    temp[i] = sprintf("[%s]\r
+\r
+sa_id=%s\r
+sa_key=%s\r
+sa_api_token=%s\r
+sa_api_token_expires=%s\r
+username=%s\r
+first_name=%s\r
+last_name=%s\r
+userid=%s\r
+user_key=%s\r",
+config_list$url$V2[i],config_list$sa_id$V2[i],config_list$sa_key$V2[i],config_list$sa_api_token$V2[i],config_list$sa_api_token_expires$V2[i],
+config_list$username$V2[i],config_list$first_name$V2[i],config_list$last_name$V2[i],config_list$userid$V2[i],config_list$user_key$V2[i]);
+  }
+  ini = paste(temp,collapse="\r")
+  return(ini)
+}
+
