@@ -9,18 +9,18 @@
 ddslogin <- function(url=NA, rememberMe=TRUE) {
   ddslogout();
   a <- new("Config")
+  # If the URL is saved on a config, use it
+  #################################################################################################
+  try(a<-.setConfig(a),silent=TRUE)
+  .setCacheConfigObject(a)
   # What url should we use?
   #################################################################################################
   if (!is.na(url)) {
     #try to match url provided to that of options from config to bypass user choice
     .setCache('url',url)
-  } else {
+  } else if (.getCache('url')=='') {
     .setCache('url',.getCache('defaultUrl'))
   }
-  # If the chosen URL is saved on a config, use it
-  #################################################################################################
-  try(a<-.setConfig(a),silent=TRUE)
-  .setCacheConfigObject(a)
 
   # We need a valid JWT to be considered "logged in" - three ways to get there...
   #################################################################################################
