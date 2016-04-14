@@ -6,22 +6,21 @@
 #' @examples
 #' ddslogin()
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
+
 ddslogin <- function(url=NA, rememberMe=TRUE) {
   ddslogout();
+  #it's possible that the user will provide a url other than default, cache That
+  if (!is.na(url)){.setCache('url',url);.setCache('askUserUrl',FALSE)}
   a <- new("Config")
-  # If the URL is saved on a config, use it
+  # Try to get the config and load into cache if there is one, if not at least make sure we have url
   #################################################################################################
-  try(a<-.setConfig(a),silent=TRUE)
+  tryCatch({a<-.setConfig(a)},
+           silent=TRUE,
+           error = function(e){invisible(e)},
+           finally={
+             a@url = .getCache('url')
+           })
   .setCacheConfigObject(a)
-  # What url should we use?
-  #################################################################################################
-  if (!is.na(url)) {
-    #try to match url provided to that of options from config to bypass user choice
-    .setCache('url',url)
-  } else if (.getCache('url')=='') {
-    .setCache('url',.getCache('defaultUrl'))
-  }
-
   # We need a valid JWT to be considered "logged in" - three ways to get there...
   #################################################################################################
   if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) > as.integer(as.POSIXct( Sys.time() ))))   {
@@ -57,7 +56,7 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
 ddslogout <- function(){
   .setCache('sa_api_token','')
   .setCache('sa_api_token_expires','')
-  .setCache('url','')
+  .setCache("url","https://dukeds-dev.herokuapp.com")
   curlheader = .getCache('curlHeader')
 }
 
