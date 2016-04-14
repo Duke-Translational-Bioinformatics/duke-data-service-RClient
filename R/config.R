@@ -111,7 +111,7 @@ setMethod(f=".setConfig",
           {
             config_list = .readConfig(Object);
             indx <- which(.getCache('url') %in% config_list$url$V2)
-            if (length(indx)>0) {
+            if ((length(indx)>0) & (.getCache('askUserUrl')==FALSE)) {
               message(sprintf("I see you've previously logged into this platform, gathering required information for authentication"))
               chosen <- do.call("rbind",lapply(config_list,function(x) data.frame(x[as.numeric(indx),])))
               #Assuming only one software agent per url, but that will change enter code here
@@ -121,20 +121,22 @@ setMethod(f=".setConfig",
               INI.list <- list()
               eval(parse(text=ToParse))
               return(Object)
-             } else {
-               #.urls_list = unlist(lapply(seq_along(config_list$url$V2),function(x) paste0(x,') ',config_list$url$V2[x],'\n')))
-               #msg1<-paste0(c("You've cached at least one url in the past.\n",
-               #               .urls_list,
-               #               "Please enter the number of the url to use:"),
-               #             collapse="")
-               #url_indx <-readline(writeLines(msg1))
-               #chosen <- do.call("rbind",lapply(config_list,function(x) data.frame(x[as.numeric(url_indx),])))
+             } else if ((length(indx)>0) & (.getCache('askUserUrl')==TRUE)){
+               .urls_list = unlist(lapply(seq_along(config_list$url$V2),function(x) paste0(x,') ',config_list$url$V2[x],'\n')))
+               msg1<-paste0(c("You've cached at least one url in the past.\n",
+                              .urls_list,
+                              "Please enter the number of the url to use:"),
+                            collapse="")
+               url_indx <-readline(writeLines(msg1))
+               chosen <- do.call("rbind",lapply(config_list,function(x) data.frame(x[as.numeric(url_indx),])))
                #Assuming only one software agent per url, but that will change enter code here
                #when that change is made
                #set slot values according to config and user choice
-               #ToParse  <- paste("Object@",chosen$V1,"<- '",chosen$V2, "'", sep="")
-               #INI.list <- list()
-               #eval(parse(text=ToParse))
+               ToParse  <- paste("Object@",chosen$V1,"<- '",chosen$V2, "'", sep="")
+               INI.list <- list()
+               eval(parse(text=ToParse))
+               return(Object)
+             } else {
                Object@url = .getCache('url')
                return(Object)
              }

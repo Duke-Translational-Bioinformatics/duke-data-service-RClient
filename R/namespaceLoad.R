@@ -26,6 +26,7 @@
     .setCache("webRequestMaxTries", 10)
     .setCache("webRequestMaxRedirects", 3)
     .setCache("url","https://dukeds-dev.herokuapp.com")
+    .setCache('askUserUrl',TRUE)
     #UATEST     .setCache("url","https://dukeds-uatest.herokuapp.com")
     #PRODUCTION .setCache("url","https://dukeds.herokuapp.com")
   }
