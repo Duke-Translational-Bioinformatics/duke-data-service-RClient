@@ -110,7 +110,7 @@ setMethod(f=".setConfig",
           definition=function(Object)
           {
             config_list = .readConfig(Object);
-            indx <- which(.getCache('url') %in% config_list$url$V2)
+            indx <- which(config_list$url$V2==.getCache('url'))
             if ((length(indx)>0) & (.getCache('askUserUrl')==FALSE)) {
               message(sprintf("I see you've previously logged into this platform, gathering required information for authentication"))
               chosen <- do.call("rbind",lapply(config_list,function(x) data.frame(x[as.numeric(indx),])))
