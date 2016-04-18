@@ -37,6 +37,11 @@ ddsRequest<-function(
             add_headers(httpheader),
             progress())
   }
+  else if (customrequest=="DELETE") {
+    r = DELETE(paste0(url,'/api/v1',endpoint),
+            add_headers(httpheader),
+            progress())
+  }
   return(list('header'=r$header,
               'body'=content(r,'parsed'),
               'status'=r$status
