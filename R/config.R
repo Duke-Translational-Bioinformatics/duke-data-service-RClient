@@ -64,7 +64,7 @@ setMethod(f=".saveConfig",
             ################################################
             else {
               config_list<-.readConfig(Object)
-              indx <- which(Object@url %in% config_list$url$V2)
+              indx <- which(config_list$url$V2==Object@url)
               #This config file already contains information about this url
               if (length(indx)>0) {
                 config_list$sa_api_token$V2[indx]=Object@sa_api_token
