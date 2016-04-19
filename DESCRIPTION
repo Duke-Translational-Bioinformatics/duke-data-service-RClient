@@ -1,5 +1,5 @@
 Package: ddsRClient
-ype: Package
+Type: Package
 Title: R programmatic client to the duke-data-service
 Version: 0.1
 Date: 2016-03-15
