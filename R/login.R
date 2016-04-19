@@ -16,9 +16,9 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
   #################################################################################################
   tryCatch({a<-.setConfig(a)},
            silent=TRUE,
-           error = function(e){invisible(e);a@url = .getCache('url')},
-           finally={
-           })
+           error = function(e){invisible(e)}
+           )
+  if (a@url=="") {a@url = .getCache('url')}
   .setCacheConfigObject(a)
   # We need a valid JWT to be considered "logged in" - three ways to get there...
   #################################################################################################
