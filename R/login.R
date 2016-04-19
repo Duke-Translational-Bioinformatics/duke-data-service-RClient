@@ -16,9 +16,8 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
   #################################################################################################
   tryCatch({a<-.setConfig(a)},
            silent=TRUE,
-           error = function(e){invisible(e)},
+           error = function(e){invisible(e);a@url = .getCache('url')},
            finally={
-             a@url = .getCache('url')
            })
   .setCacheConfigObject(a)
   # We need a valid JWT to be considered "logged in" - three ways to get there...
@@ -27,20 +26,28 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
     #nothing needs to be done, we have valid token and it hasn't expired
   } else if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() )))) {
     #refreshing our sa_api_token
-    .getAndSetToken(.getCache('url'));
+    .getAndSetToken();
+    #We're now "logged in", if rememberMe is true, we need to write out to the config file
+    #################################################################################################
+    if (rememberMe) {
+      #update our config option to reflect what our cache now holds
+      a=.loadConfigFromCache(a)
+      .saveConfig(a)
+    }
   } else {
     ##reworking this workflow to align with the python client
     .getAndSetKeys(.getCache('url'));
     .getAndSetToken();
     .getUserInformation();
+    #We're now "logged in", if rememberMe is true, we need to write out to the config file
+    #################################################################################################
+    if (rememberMe) {
+      #update our config option to reflect what our cache now holds
+      a=.loadConfigFromCache(a)
+      .saveConfig(a)
+    }
   }
-  #We're now "logged in", if rememberMe is true, we need to write out to the config file
-  #################################################################################################
-  if (rememberMe) {
-    #update our config option to reflect what our cache now holds
-    a=.loadConfigFromCache(a)
-    .saveConfig(a)
-  }
+
   #Welcome the user and let them know they're logged in and remind them which system they are using
   #################################################################################################
   message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))

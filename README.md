@@ -33,17 +33,33 @@ as such
 ```
 #development
 ddslogin()
+r = ddsRequest(customrequest="GET",
+               endpoint='/current_user',
+               httpheader=curlheader)
+r$status
 
 #UATEST
 ddslogin(url='https://dukeds-uatest.herokuapp.com')
+r = ddsRequest(customrequest="GET",
+               endpoint='/current_user',
+               httpheader=curlheader)
+r$status
 
 #PRODUCTION
 ddslogin(url='https://dukeds.herokuapp.com')
+r = ddsRequest(customrequest="GET",
+               endpoint='/current_user',
+               httpheader=curlheader)
+r$status
 
 #After a user has logged into these systems once. The url parameter is essentially
 #not needed if doing interactive programming as the client will present the
 #platforms that are saved, so all one needs to do is:
 ddslogin()
+r = ddsRequest(customrequest="GET",
+               endpoint='/current_user',
+               httpheader=curlheader)
+r$status
 ```
 
 ### Example: Workflow to create a new project in UATEST environment

@@ -18,7 +18,7 @@ ddsRequest<-function(
   httpheader=.getCache('curlHeader'), # the headers
   curlHandle # the curl handle
   ) {
- message(sprintf("%s %s %s progress:",customrequest,url, endpoint))
+ message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {
   r = GET(paste0(url,'/api/v1',endpoint),
           add_headers(httpheader),
