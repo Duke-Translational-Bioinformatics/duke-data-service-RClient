@@ -26,6 +26,7 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
     #nothing needs to be done, we have valid token and it hasn't expired
   } else if ((.getCache('sa_api_token') != "") & (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() )))) {
     #refreshing our sa_api_token
+    .setCache('sa_api_token_expires',as.character(as.integer(as.POSIXct( Sys.time() ))))
     .getAndSetToken();
     #We're now "logged in", if rememberMe is true, we need to write out to the config file
     #################################################################################################

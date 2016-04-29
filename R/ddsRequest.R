@@ -18,6 +18,10 @@ ddsRequest<-function(
   httpheader=.getCache('curlHeader'), # the headers
   curlHandle # the curl handle
   ) {
+ if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
+   url=.getCache('url')
+   eval(parse(text=paste0('ddslogin("',url,'")')))
+ }
  message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {
   r = GET(paste0(url,'/api/v1',endpoint),
