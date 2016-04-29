@@ -63,7 +63,7 @@ ddslogout <- function(){
   .setCache('sa_api_token_expires','')
   .setCache("url","https://dukeds-dev.herokuapp.com")
   .setCache('askUserUrl',TRUE)
-  curlheader = .getCache('curlHeader')
+  assign("curlheader", c(.getCache('curlHeader')), envir = .GlobalEnv)
 }
 
 .getUserInformation <- function(api_token=.getCache('sa_api_token')) {
