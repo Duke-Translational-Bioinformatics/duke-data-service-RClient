@@ -69,3 +69,15 @@ setGeneric(name=".loadConfigFromCache",
              standardGeneric(".loadConfigFromCache")
            }
 )
+setGeneric(name=".getFileNamesIntoList",
+           def=function(Object)
+           {
+             standardGeneric(".getFileNamesIntoList")
+           }
+)
+setGeneric(name=".getProjectId",
+           def=function(Object)
+           {
+             standardGeneric(".getProjectId")
+           }
+)

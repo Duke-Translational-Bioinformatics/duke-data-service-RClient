@@ -53,6 +53,7 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
   #################################################################################################
   message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))
   assign("curlheader", c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')), envir = .GlobalEnv)
+  .setCache("curlheader",c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')))
 }
 
 #' Function to sign out of DDS. This amounts to removing the authorization jwt.
@@ -82,7 +83,8 @@ ddslogout <- function(){
               user_key=user_key)
   r = ddsRequest(customrequest="POST",
                  endpoint='/software_agents/api_token',
-                 body_list=body)
+                 body_list=body,
+                 httpheader=.getCache('curlHeader'))
   .setCache('sa_api_token',r$body$api_token)
   .setCache('sa_api_token_expires',r$body$expires_on)
 

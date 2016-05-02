@@ -15,7 +15,7 @@ ddsRequest<-function(
   endpoint=NULL,
   body_list = NULL, # the request body
   customrequest="GET", # the request method
-  httpheader=.getCache('curlHeader'), # the headers
+  httpheader=.getCache('curlheader'), # the headers
   curlHandle # the curl handle
   ) {
  if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
