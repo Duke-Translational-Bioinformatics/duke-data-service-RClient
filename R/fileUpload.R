@@ -75,7 +75,35 @@ ddsUpload<-function(
   }
 }
 
-.uploadFile <- function(filepath,chunksizeBytes=chunk_size_bytes) {
+.uploadFile <- function(filepath,
+                        project_id,
+                        chunksizeBytes=chunk_size_bytes) {
+      file.info(filepath)$size
+      ################################################
+      #first order of business (per apiary blueprint) is to create an upload object within dds
+      ################################################
+      body = list('name'=basename(filepath),
+                  'content_type'='application/json',
+                  'size' = file.info(filepath)$size,
+                  'hash.value' = md5sum(filepath)[[1]],
+                  'hash.algorithm' = 'md5')
+      r = ddsRequest(customrequest="POST",
+                 endpoint=paste0('/projects/',project_id,'/uploads'),
+                 body_list=body)
+      if (r$status!=201)
+        stop(sprintf('in .uploadFile(): endpoint /project/%s/uploads failed with %s',project_id,r$status))
+      upload_object_id = r$body$id
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      ################################################
+      chunkNumber <- 1 # service requires that chunk number be >0
       connection<-file(filepath, open="rb")
       tryCatch(
         {

@@ -1,5 +1,6 @@
 ## imports from other packages
 import(httr)
+importFrom(tools, md5sum)
 
 ## S3 utility methods
 export(
