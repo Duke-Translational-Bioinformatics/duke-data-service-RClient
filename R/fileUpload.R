@@ -14,17 +14,12 @@ setClass(
   prototype=list(
     isfolder         = FALSE,
     upload_object    = "",
-    local            = list("filenames"="",
-                            "hash_algorithm"="",
-                            "hash_value"=""),
-    dds            = list("filenames"="",
-                            "hash_algorithm"="",
-                            "hash_value"=""),
+    local            = list("filenames"=""),
+    dds            = list("filenames"=""),
     project          = "",
     projectid        = ""
   )
 )
-
 #' DDS RESTful File Upload.
 #'
 #' @param file_folder The location (UNC path) of a file or folder to be uploaded
@@ -44,7 +39,6 @@ ddsUpload<-function(
   fileupload@project        = project
   fileupload@upload_object  = file_folder
   fileupload@isfolder       = file.info(file_folder)$isdir
-  fileupload@chunk_size_bytes = chunk_size_bytes
   ################################################
   #do some file checking
   ################################################
@@ -78,31 +72,20 @@ ddsUpload<-function(
 .uploadFile <- function(filepath,
                         project_id,
                         chunksizeBytes=chunk_size_bytes) {
-      file.info(filepath)$size
       ################################################
       #first order of business (per apiary blueprint) is to create an upload object within dds
       ################################################
       body = list('name'=basename(filepath),
                   'content_type'='application/json',
                   'size' = file.info(filepath)$size,
-                  'hash.value' = md5sum(filepath)[[1]],
-                  'hash.algorithm' = 'md5')
+                  'hash' = list('value' = digest(filepath,algo='md5',file=TRUE),
+                                'algorithm' = 'md5'))
       r = ddsRequest(customrequest="POST",
                  endpoint=paste0('/projects/',project_id,'/uploads'),
                  body_list=body)
       if (r$status!=201)
         stop(sprintf('in .uploadFile(): endpoint /project/%s/uploads failed with %s',project_id,r$status))
       upload_object_id = r$body$id
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
-      ################################################
       chunkNumber <- 1 # service requires that chunk number be >0
       connection<-file(filepath, open="rb")
       tryCatch(
@@ -113,47 +96,37 @@ ddsUpload<-function(
             chunk <- readBin(con=connection, what="raw", n=chunksizeBytes)
             if (length(chunk)==0) break
 
-            ## get the signed S3 URL
-            chunkRequest <- list(chunkNumber=chunkNumber, chunkedFileToken=token)
-
-            curlHandle<-getCurlHandle()
-
-            result<-webRequestWithRetries(
-              fcn=function(curlHandle) {
-                chunkUploadUrl <- createChunkedFileUploadChunkURL(chunkRequest)
-                if (debug) message(sprintf('url= %s\n', chunkUploadUrl))
-
-                httpResponse<-.getURLIntern(chunkUploadUrl,
-                                            postfields=chunk, # the request body
-                                            customrequest="PUT", # the request method
-                                            httpheader=headers, # the headers
-                                            curl=curlHandle,
-                                            debugfunction=NULL,
-                                            .opts=.getCache("curlOpts")
-                )
-                # return the http response
-                httpResponse$body
-              },
-              curlHandle,
-              extraRetryStatusCodes=400 #SYNR-967
+            ## get a pre-signed URL to upload the chunk. This also ensures that the project container exists in the storage_provider
+            body = list('number'=chunkNumber,
+                        'size'=length(chunk), #this is the bytes of the chunk, we do this because the last is usually different than specified
+                        'hash' = list('value' = digest(chunk,algo='md5'),
+                                      'algorithm' = 'md5'))
+            r = ddsRequest(customrequest="PUT",
+                           endpoint=paste0('/uploads/',upload_object_id,'/chunks'),
+                           body_list=body)
+            #Using the response from that call, upload the chunk to the service
+            args = list("body"=chunk)
+            r2 = ddsRequest(
+              url=r$body$host, # omitting the endpoint
+              endpoint=r$body$url,
+              body_list = args, # the request body
+              customrequest=r$body$http_verb, # the request method
+              httpheader=""
             )
-            .checkCurlResponse(object=curlHandle, response=result$body, logErrorToSynapse=TRUE)
-
             totalUploadedBytes <- totalUploadedBytes + length(chunk)
             percentUploaded <- totalUploadedBytes*100/fileSizeBytes
             # print progress, but only if there's more than one chunk
             if (chunkNumber>1 | percentUploaded<100) {
               cat(sprintf("Uploaded %.1f%%\n", percentUploaded))
             }
-
-            chunkResults[[length(chunkResults)+1]]<-chunkNumber
             chunkNumber <- chunkNumber + 1
           }
+        r = ddsRequest(customrequest="PUT",
+                       endpoint=paste0('/uploads/',upload_object_id,'/complete'))
         },
         finally=close(connection)
       )
 }
-
 
 setMethod(f=".getFileNamesIntoList",
           signature="FileUpload",

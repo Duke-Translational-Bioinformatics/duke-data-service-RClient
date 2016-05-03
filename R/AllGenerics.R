@@ -81,3 +81,9 @@ setGeneric(name=".getProjectId",
              standardGeneric(".getProjectId")
            }
 )
+setGeneric(name=".getLocalHash",
+           def=function(Object)
+           {
+             standardGeneric(".getLocalHash")
+           }
+)

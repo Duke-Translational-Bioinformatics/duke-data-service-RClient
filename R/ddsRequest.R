@@ -11,7 +11,7 @@
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 
 ddsRequest<-function(
-  url=.getCache('url'), # omitting the endpoint
+  url=paste0(.getCache('url'),'/api/v1'), # omitting the endpoint
   endpoint=NULL,
   body_list = NULL, # the request body
   customrequest="GET", # the request method
@@ -24,12 +24,12 @@ ddsRequest<-function(
  }
  message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {
-  r = GET(paste0(url,'/api/v1',endpoint),
+  r = GET(paste0(url,endpoint),
           add_headers(httpheader),
           progress())
 
  } else if (customrequest=="POST") {
-   r = POST(paste0(url,'/api/v1',endpoint),
+   r = POST(paste0(url,endpoint),
            add_headers(httpheader),
            body=body_list,
            encode="json",
@@ -37,18 +37,20 @@ ddsRequest<-function(
 
  }
   else if (customrequest=="PUT") {
-    r = PUT(paste0(url,'/api/v1',endpoint),
+    r = PUT(paste0(url,endpoint),
             add_headers(httpheader),
-            progress())
+            body=body_list,
+            encode="json")
   }
   else if (customrequest=="DELETE") {
-    r = DELETE(paste0(url,'/api/v1',endpoint),
+    r = DELETE(paste0(url,endpoint),
             add_headers(httpheader),
             progress())
   }
   return(list('header'=r$header,
               'body'=content(r,'parsed'),
-              'status'=r$status
+              'status'=r$status,
+              'request'=r$request
               )
          )
 }
