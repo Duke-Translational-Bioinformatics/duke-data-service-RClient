@@ -75,10 +75,10 @@ setGeneric(name=".getFileNamesIntoList",
              standardGeneric(".getFileNamesIntoList")
            }
 )
-setGeneric(name=".getProjectId",
+setGeneric(name=".getDDSProjectId",
            def=function(Object)
            {
-             standardGeneric(".getProjectId")
+             standardGeneric(".getDDSProjectId")
            }
 )
 setGeneric(name=".getLocalHash",

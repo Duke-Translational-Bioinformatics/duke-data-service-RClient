@@ -14,8 +14,10 @@ setClass(
   prototype=list(
     isfolder         = FALSE,
     upload_object    = "",
-    local            = list("filenames"=""),
-    dds            = list("filenames"=""),
+    local            = list("filehashes"="",
+                            "dirs"=""),
+    dds              = list("filehashes"="",
+                            "dirs"=""),
     project          = "",
     projectid        = ""
   )
@@ -26,7 +28,7 @@ setClass(
 #' @param project The DDS project to upload the payload.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpoad(file_folder="stinkbug.png",project="Entomology Library")
+#' ddsUpoad(file_folder="/Users/nn31/Desktop/test_pics",project="Entomology Library")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -45,19 +47,19 @@ ddsUpload<-function(
   if (!file.exists(fileupload@upload_object))
     stop(sprintf('File/Folder not found: %s',filepath))
   ################################################
+  #Before we process files locally, let's reach out
+  #to DDS and see if/what is already there
+  ################################################
+  fileupload@projectid = .getProjectId(fileupload)
+  ################################################
   #We have valid input and the file/folder exists on the client
   #Let's obtain a list of files that need to be uploaded
   ################################################
   if (fileupload@isfolder) {
-    fileupload@local$filenames = .getFileNamesIntoList(fileupload)
+    fileupload@local = .getFileNamesIntoList(fileupload)
   } else {
     fileupload@local$filenames = fileupload@upload_object
   }
-  ################################################
-  #If the project is already on DDS, get the id,
-  #if not, then POST and get id
-  ################################################
-  fileupload@projectid = .getProjectId(fileupload)
   ################################################
   #If user submitted a folder, then we need to
   #check DDS to see if the folder structure meets
@@ -71,6 +73,8 @@ ddsUpload<-function(
 
 .uploadFile <- function(filepath,
                         project_id,
+                        file_hash,
+                        folder_id=NULL,
                         chunksizeBytes=chunk_size_bytes) {
       ################################################
       #first order of business (per apiary blueprint) is to create an upload object within dds
@@ -78,7 +82,7 @@ ddsUpload<-function(
       body = list('name'=basename(filepath),
                   'content_type'='application/json',
                   'size' = file.info(filepath)$size,
-                  'hash' = list('value' = digest(filepath,algo='md5',file=TRUE),
+                  'hash' = list('value' = file_hash,
                                 'algorithm' = 'md5'))
       r = ddsRequest(customrequest="POST",
                  endpoint=paste0('/projects/',project_id,'/uploads'),
@@ -95,8 +99,9 @@ ddsUpload<-function(
           repeat {
             chunk <- readBin(con=connection, what="raw", n=chunksizeBytes)
             if (length(chunk)==0) break
-
+            ################################################
             ## get a pre-signed URL to upload the chunk. This also ensures that the project container exists in the storage_provider
+            ################################################
             body = list('number'=chunkNumber,
                         'size'=length(chunk), #this is the bytes of the chunk, we do this because the last is usually different than specified
                         'hash' = list('value' = digest(chunk,algo='md5',serialize = FALSE),
@@ -104,7 +109,9 @@ ddsUpload<-function(
             r = ddsRequest(customrequest="PUT",
                            endpoint=paste0('/uploads/',upload_object_id,'/chunks'),
                            body_list=body)
+            ################################################
             #Using the response from that call, upload the chunk to the service
+            ################################################
             r2 = ddsRequest(
               url=r$body$host, # omitting the endpoint
               endpoint=r$body$url,
@@ -123,43 +130,51 @@ ddsUpload<-function(
         #Inform DDS that the file is now available in Swift
         r = ddsRequest(customrequest="PUT",
                        endpoint=paste0('/uploads/',upload_object_id,'/complete'))
+        ################################################
         #Complete the upload process by creating a file
+        ################################################
+        if (is.null(folder_id)) {
+          body = list('parent' = list("kind"="dds-project",
+                                      "id"=project_id),
+                      'upload' = list("id"=upload_object_id))
+
+          r = ddsRequest(customrequest="POST",
+                         endpoint=paste0('/files'),
+                         body_list=body)
+        } else {
+          body = list('parent' = list("kind"="dds-folder",
+                                      "id"=folder_id),
+                      'upload' = list("id"=upload_object_id))
+          r = ddsRequest(customrequest="POST",
+                         endpoint=paste0('/files'),
+                         body_list=body)
+        }
         },
         finally=close(connection)
       )
 }
-
-.fromUploadPostFile <- function(fileupload,upload_object_id) {
-  if (!fileupload@isfolder) {
-    body = list('parent' = list("kind"="dds-project",
-                                "id"=fileupload@projectid),
-                'upload' = list("id"=upload_object_id))
-
-    r = ddsRequest(customrequest="POST",
-                   endpoint=paste0('/files'),
-                   body_list=body)
-  }
-}
-
 setMethod(f=".getFileNamesIntoList",
           signature="FileUpload",
           definition=function(Object){
-          # A method to extract filenames from an upload object
-          dirs <- list.dirs(Object@upload_object)
-          file_list = character()
-          for (i in 1:length(dirs)) {
-            temp <- list.files(dirs[i])
-            for (j in 1:length(temp)) {
-              if (!file.info(file.path(dirs[i],temp[j]))$isdir) {
-                file_list <- c(file_list,file.path(dirs[i],temp[j]))
-              }
-            }
-          }
-          return(file_list)
+          # A method to fill in local metadata about file/directory structure
+          filenames         = list.files(basename(fileupload@upload_object),recursive=TRUE,full.names=TRUE)
+          filenames_full    = list.files(fileupload@upload_object,recursive=TRUE,full.names=TRUE)
+          filehashes        = sapply(filenames_full, function(x) digest(x,algo='md5',file=TRUE))
+          names(filehashes) = filenames
+          dirs              = list.dirs(basename(fileupload@upload_object),recursive=TRUE,full.names=TRUE)
+
+          return( list("filehashes" =filehashes,
+                       "dirs"       =dirs)
+                  )
+
+          #stuff to work with
+
 })
-setMethod(f=".getProjectId",
+setMethod(f=".getDDSProjectId",
           signature="FileUpload",
           definition=function(Object){
+          filehashes = character()
+          dirs = character()
           r = ddsRequest(customrequest="GET",
                          endpoint='/projects')
           #Notice could have multiple matches, but we only pull the first - is this the right thing to do?
@@ -167,6 +182,19 @@ setMethod(f=".getProjectId",
           matchProj = sapply(r$body$results, function(x) if (x$name==Object@project) {return(TRUE)} else {return(FALSE)})
           if (sum(matchProj) > 0) {
             projId = r$body$results[matchProj][[1]]$id
+            #Now let's get all of the informaiton associated with this project
+            r = ddsRequest(customrequest="GET",
+                           endpoint=paste0('/projects/',projId,'/children'))
+            #We need to create a metadata configuration for file/structure and file/information
+            parseChildren <- function(children) {
+              if (children$kind=="dds-folder") {
+                dirs = eval(parse(text=paste0("c(dirs,'",children$id,"'='",children$name,"')")))
+                folder = ddsRequest(customrequest="GET",endpoint=paste0('/folders/',children$id,'/children'))
+
+              }
+
+
+            }
           } else {
             body = list(name=Object@project,
                         description=paste0(Object@project," via R Client .getProjectId()"))
