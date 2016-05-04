@@ -31,7 +31,7 @@ setClass(
 ddsUpload<-function(
   file_folder=NULL,
   project=NULL,
-  chunk_size_bytes = 1024
+  chunk_size_bytes = 1293892
   ) {
   if (is.null(file_folder) | is.null(project))
     stop(sprintf('ddsUpload requires valid input for file_folder and project'))
@@ -99,17 +99,16 @@ ddsUpload<-function(
             ## get a pre-signed URL to upload the chunk. This also ensures that the project container exists in the storage_provider
             body = list('number'=chunkNumber,
                         'size'=length(chunk), #this is the bytes of the chunk, we do this because the last is usually different than specified
-                        'hash' = list('value' = digest(chunk,algo='md5'),
+                        'hash' = list('value' = digest(chunk,algo='md5',serialize = FALSE),
                                       'algorithm' = 'md5'))
             r = ddsRequest(customrequest="PUT",
                            endpoint=paste0('/uploads/',upload_object_id,'/chunks'),
                            body_list=body)
             #Using the response from that call, upload the chunk to the service
-            args = list("body"=chunk)
             r2 = ddsRequest(
               url=r$body$host, # omitting the endpoint
               endpoint=r$body$url,
-              body_list = args, # the request body
+              body_list = chunk, # the request body
               customrequest=r$body$http_verb, # the request method
               httpheader=""
             )
@@ -121,11 +120,25 @@ ddsUpload<-function(
             }
             chunkNumber <- chunkNumber + 1
           }
+        #Inform DDS that the file is now available in Swift
         r = ddsRequest(customrequest="PUT",
                        endpoint=paste0('/uploads/',upload_object_id,'/complete'))
+        #Complete the upload process by creating a file
         },
         finally=close(connection)
       )
+}
+
+.fromUploadPostFile <- function(fileupload,upload_object_id) {
+  if (!fileupload@isfolder) {
+    body = list('parent' = list("kind"="dds-project",
+                                "id"=fileupload@projectid),
+                'upload' = list("id"=upload_object_id))
+
+    r = ddsRequest(customrequest="POST",
+                   endpoint=paste0('/files'),
+                   body_list=body)
+  }
 }
 
 setMethod(f=".getFileNamesIntoList",
