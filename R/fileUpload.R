@@ -156,6 +156,9 @@ ddsUpload<-function(
 setMethod(f=".getFileNamesIntoList",
           signature="FileUpload",
           definition=function(Object){
+          temp <- getwd()
+          setwd(fileupload@upload_object)
+          setwd('..')
           # A method to fill in local metadata about file/directory structure
           filenames         = list.files(basename(fileupload@upload_object),recursive=TRUE,full.names=TRUE)
           filenames_full    = list.files(fileupload@upload_object,recursive=TRUE,full.names=TRUE)
@@ -166,7 +169,7 @@ setMethod(f=".getFileNamesIntoList",
           return( list("filehashes" =filehashes,
                        "dirs"       =dirs)
                   )
-
+          setwd(temp)
           #stuff to work with
 
 })
@@ -185,11 +188,21 @@ setMethod(f=".getDDSProjectId",
             #Now let's get all of the informaiton associated with this project
             r = ddsRequest(customrequest="GET",
                            endpoint=paste0('/projects/',projId,'/children'))
+            if (length(r$body$results)>0) {
+              sapply(r$body$results, function(x) parseChildren(x))
+            }
             #We need to create a metadata configuration for file/structure and file/information
-            parseChildren <- function(children) {
-              if (children$kind=="dds-folder") {
-                dirs = eval(parse(text=paste0("c(dirs,'",children$id,"'='",children$name,"')")))
-                folder = ddsRequest(customrequest="GET",endpoint=paste0('/folders/',children$id,'/children'))
+            parseProjChildren <- function(children) {
+              dirs = character()
+              dir_ids = character()
+              filenames = character()
+              filehashes = character()
+              for (i in 1:length(children)) {
+                if (children[[i]]$kind=="dds-folder") {
+                  dirs = c(dirs,children$name)
+                  folder = ddsRequest(customrequest="GET",endpoint=paste0('/folders/',children$id,'/children'))
+                  #paste0('/',basename(fileupload@upload_object),'/',paste(names,collapse='/'))
+                }
 
               }
 
