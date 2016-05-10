@@ -1,5 +1,5 @@
 setClass(
-  # Set the name for the class
+  # Set the name for the classes
   "FileUpload",
   # Define the slots
   slots = c(
