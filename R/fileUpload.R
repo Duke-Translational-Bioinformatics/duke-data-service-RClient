@@ -14,10 +14,11 @@ setClass(
   prototype=list(
     isfolder         = FALSE,
     upload_object    = "",
-    local            = list("filehashes"="",
+    local            = list("filenames"="",
                             "dirs"=""),
-    dds              = list("filehashes"="",
-                            "dirs"=""),
+    dds              = list("filenames"="",
+                            "dirs"="",
+                            "dir_ids"=""),
     project          = "",
     projectid        = ""
   )
@@ -50,7 +51,20 @@ ddsUpload<-function(
   #Before we process files locally, let's reach out
   #to DDS and see if/what is already there
   ################################################
-  fileupload@projectid = .getProjectId(fileupload)
+  dds_info = .getDDSProjectId(fileupload)
+  fileupload@projectid = dds_info$projId
+  fileupload@dds$dirs = dds_info$dds$dirs
+  fileupload@dds$dir_ids = dds_info$dds$dir_ids
+  #before we continue, I don't know what multiple filehashes per file would would like, so we'll stop if that happens
+  inddx = sapply(dds_info$dds$filehashes, function(x) (length(x)>1))
+  if (sum(inddx)>0) {
+    stop(sprintf("At least one file within DDS contains multiple hashes, ddsRclient currently cannot handle this situation."))
+  }
+  #make sure to rewrite this if condition above ever becomes true
+  filehashes = unlist(dds_info$dds$filehashes)
+  names(filehashes) = dds_info$dds$filenames
+  fileupload@dds$filehashes = filehashes
+
   ################################################
   #We have valid input and the file/folder exists on the client
   #Let's obtain a list of files that need to be uploaded
@@ -156,82 +170,77 @@ ddsUpload<-function(
 setMethod(f=".getFileNamesIntoList",
           signature="FileUpload",
           definition=function(Object){
-          temp <- getwd()
-          setwd(fileupload@upload_object)
-          setwd('..')
+          user_dir <- getwd()
+          setwd(Object@upload_object)
           # A method to fill in local metadata about file/directory structure
-          filenames         = list.files(basename(fileupload@upload_object),recursive=TRUE,full.names=TRUE)
-          filenames_full    = list.files(fileupload@upload_object,recursive=TRUE,full.names=TRUE)
+          filenames         = list.files(recursive=TRUE,full.names=TRUE)
+          filenames         = gsub("^.|^./","",filenames)
+          filenames_full    = list.files(Object@upload_object,recursive=TRUE,full.names=TRUE)
           filehashes        = sapply(filenames_full, function(x) digest(x,algo='md5',file=TRUE))
-          names(filehashes) = filenames
-          dirs              = list.dirs(basename(fileupload@upload_object),recursive=TRUE,full.names=TRUE)
-
-          return( list("filehashes" =filehashes,
+          names(filenames) = filehashes
+          dirs              = list.dirs(recursive=TRUE,full.names=TRUE)
+          dirs              = gsub("^.|^./","",dirs)
+          dirs              = dirs[dirs != ""]
+          on.exit(setwd(user_dir))
+          return( list("filenames" =filenames,
                        "dirs"       =dirs)
                   )
-          setwd(temp)
-          #stuff to work with
-
 })
 
-parseChildren <- function(children #Children is a response body from one of the following DDS endpoints: /projects/{id}/children or /folders/{id}/children
+parseChildren <- function(children, #Children is a response body from one of the following DDS endpoints: /projects/{id}/children or /folders/{id}/children
+                          wtl = list(
+                            dirs = character(),
+                            dir_ids = character(),
+                            filenames = character(),
+                            filehashes = character())
                           ){
   for (i in 1:length(children)) {
     temp = children[[i]]
     if (temp$kind=="dds-folder") {
       if (temp$parent$kind=="dds-folder") {
       #find out the index of where the parent lives in the directory base
-      ind     = which(temp$parent$id==basename(dir_ids))
-      dirs    = c(dirs,paste0(dirs[ind],'/',temp$name))
-      dir_ids  = c(dir_ids,paste0(dir_ids[ind],'/',temp$id))
-      if (i==length(children)) {try(break,silent=TRUE)}
+      ind     = which(temp$parent$id==basename(wtl$dir_ids))
+      wtl$dirs    = c(wtl$dirs,paste0(wtl$dirs[ind],'/',temp$name))
+      wtl$dir_ids  = c(wtl$dir_ids,paste0(wtl$dir_ids[ind],'/',temp$id))
       #paste0('/',basename(fileupload@upload_object),'/',paste(names,collapse='/'))
       } else {
-      dirs    = c(dirs,temp$name)
-      dir_ids = c(dir_ids,temp$id)
-      if (i==length(children)) {try(break,silent=TRUE)}
+        wtl$dirs    = c(wtl$dirs,temp$name)
+        wtl$dir_ids = c(wtl$dir_ids,temp$id)
       }
       #After gathering information about that folder, let's see what that folder's children looks like
       r = ddsRequest(customrequest="GET",
                          endpoint=paste0('/folders/',temp$id,'/children'))
       if (length(r$body$results)>0) {
-        repeat {parseChildren(r$body$results)}
+          wtl = Recall(r$body$results,wtl)
       }
     }
     else if (temp$kind=="dds-file") {
       if (temp$parent$kind=="dds-folder") {
         #get the upload hash id
         ################################################
-        # CHANGE THIS POSSIBLY
+        # CHANGE THIS POSSIBLY, depending on issue #9
         ################################################
         file_info = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
         #find out the index of where the parent lives in the directory base
-        ind     = which(temp$parent$id==basename(dir_ids))
-        filenames = c(filenames,paste0(dirs[ind],'/',temp$name))
-        filehashes = c(filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
+        ind     = which(temp$parent$id==basename(wtl$dir_ids))
+        wtl$filenames = c(wtl$filenames,paste0(wtl$dirs[ind],'/',temp$name))
+        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
         #paste0('/',basename(fileupload@upload_object),'/',paste(names,collapse='/'))
-        try(break,silent=TRUE)
       }
       else {
         file_info = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
-        filenames = c(filenames,temp$name)
-        filehashes = c(filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
-        try(break,silent=TRUE)
+        wtl$filenames = c(wtl$filenames,temp$name)
+        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
       }
     }
-    if (i==length(children)) {try(break,silent=TRUE)}
   }
-  return(list("dirs"=dirs,
-              "dir_ids"=dir_ids,
-              "filenames"=filenames,
-              "filehashes"=filehashes))
+  return(wtl)
 }
 
 setMethod(f=".getDDSProjectId",
           signature="FileUpload",
           definition=function(Object){
-          filehashes = character()
-          dirs = character()
+          dds = list()
           r = ddsRequest(customrequest="GET",
                          endpoint='/projects')
           #Notice could have multiple matches, but we only pull the first - is this the right thing to do?
@@ -243,10 +252,6 @@ setMethod(f=".getDDSProjectId",
             r = ddsRequest(customrequest="GET",
                            endpoint=paste0('/projects/',projId,'/children'))
             if (length(r$body$results)>0) {
-              dirs = character()
-              dir_ids = character()
-              filenames = character()
-              filehashes = character()
               dds = parseChildren(r$body$results)
             }
             #We need to create a metadata configuration for file/structure and file/information
@@ -266,7 +271,9 @@ setMethod(f=".getDDSProjectId",
               projId = r$body$id
             }
           }
-          return(projId)
+          out = list("projId"=projId,
+                     "dds"=dds)
+          return(out)
 })
 
 
