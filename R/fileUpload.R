@@ -7,6 +7,7 @@ setClass(
     upload_object    = "character",
     local            = "list",
     dds              = "list",
+    added_dds        = "list",
     project          = "character",
     projectid        = "character"
   ),
@@ -17,6 +18,9 @@ setClass(
     local            = list("filenames"="",
                             "dirs"=""),
     dds              = list("filenames"="",
+                            "dirs"="",
+                            "dir_ids"=""),
+    added_dds        = list("filenames"="",
                             "dirs"="",
                             "dir_ids"=""),
     project          = "",
@@ -56,14 +60,11 @@ ddsUpload<-function(
   fileupload@dds$dirs = dds_info$dds$dirs
   fileupload@dds$dir_ids = dds_info$dds$dir_ids
   #before we continue, I don't know what multiple filehashes per file would would like, so we'll stop if that happens
-  inddx = sapply(dds_info$dds$filehashes, function(x) (length(x)>1))
-  if (sum(inddx)>0) {
-    stop(sprintf("At least one file within DDS contains multiple hashes, ddsRclient currently cannot handle this situation."))
-  }
+  #rewrite on 5/10/16, dds only providing current version of file
   #make sure to rewrite this if condition above ever becomes true
   filehashes = unlist(dds_info$dds$filehashes)
-  names(filehashes) = dds_info$dds$filenames
-  fileupload@dds$filehashes = filehashes
+  names(dds_info$dds$filenames) = filehashes
+  fileupload@dds$filenames = dds_info$dds$filenames
 
   ################################################
   #We have valid input and the file/folder exists on the client
@@ -75,14 +76,66 @@ ddsUpload<-function(
     fileupload@local$filenames = fileupload@upload_object
   }
   ################################################
-  #If user submitted a folder, then we need to
-  #check DDS to see if the folder structure meets
-  #local folder structure. While doing so we will
-  #cache folder_ids to make uploading easier
+  #Now we know what is local and dds, we can do
+  #the real heavy lifting, let's first create any
+  #folders that are on local, but not dds
   ################################################
-  if (fileupload@isfolder) {
+  folders_to_add = setdiff(fileupload@local$dirs,fileupload@dds$dirs)
+  #creating folders on DDS and storing metadata in fileupload@dds
+  fileupload@dds = .createDDSFolders(folders_to_add)
+  ################################################
+  #Now all local folders are on DDS, let's put
+  #all local files on DDS if not already there,
+  #or their hash doesn't match ddsRClient version
+  ################################################
+  files_to_add = .whichFileToAdd()
+}
 
+.whichFileToAdd <- function() {
+  #first, we'll gather all files that are on local but not dds
+  files_to_add = setdiff(fileupload@local$filenames,fileupload@dds$filenames)
+  #Next, let's check files that are on both to see if hashes match:
+  same = intersect(fileupload@local$filenames,fileupload@dds$filenames)
+  for (i in 1:length(same)) {
+     if (names(which(same[i] == fileupload@local$filenames)) != names(which(same[i] == fileupload@dds$filenames))) {
+       files_to_add = c(files_to_add,same[i])
+     }
   }
+  return(files_to_add)
+}
+
+.createDDSFolders <- function(add_folder_list) {
+  created_dirs = list('dirs'    = '',
+                      'dir_ids' = '')
+  for (i in 1:length(add_folder_list)) {
+    #find out if any of the parent folders match folders already on dds
+    indx = ( dirname(add_folder_list[i])==fileupload@dds$dirs )
+    if (sum(indx)>1) {stop(".createDDSFolders() found multiple base directories matching a folder to be added, intervention needed.")}
+    else if (sum(indx)==1) {
+      base_dir_ids = fileupload@dds$dir_ids[indx]
+      body = list("parent"=list("kind"="dds-folder",
+                                "id"=basename(base_dir_ids)),
+                  "name"=basename(add_folder_list[i]))
+      r = ddsRequest(customrequest="POST",
+                     endpoint=paste0('/folders'),
+                     body_list=body)
+      if (r$status != 201) {stop(".createDDSFolders, couldn't create folder for upload")}
+      ids = paste0(base_dir_ids,'/',r$body$id)
+      fileupload@dds$dirs = c(fileupload@dds$dirs,add_folder_list[i])
+      fileupload@dds$dir_ids = c(fileupload@dds$dir_ids, ids)
+    } else {
+      body = list("parent"=list("kind"="dds-project",
+                                "id"=fileupload@projectid),
+                  "name"=basename(add_folder_list[i]))
+      r = ddsRequest(customrequest="POST",
+                     endpoint=paste0('/folders'),
+                     body_list=body)
+      if (r$status != 201) {stop(".createDDSFolders, couldn't create folder for upload")}
+      fileupload@dds$dirs = c(fileupload@dds$dirs,add_folder_list[i])
+      fileupload@dds$dir_ids = c(fileupload@dds$dir_ids, r$body$id)
+    }
+  }
+  return(fileupload@dds)
 }
 
 .uploadFile <- function(filepath,
@@ -230,7 +283,8 @@ parseChildren <- function(children, #Children is a response body from one of the
       else {
         file_info = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
         wtl$filenames = c(wtl$filenames,temp$name)
-        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
+        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$current_version$upload$hash$value),"",file_info$body$current_version$upload$hash$value))
+        if (!(file_info$body$current_version$upload$hash$algorithm %in% c("","md5"))) {stop("DDS File contains hash that is not")}
       }
     }
   }
@@ -240,7 +294,6 @@ parseChildren <- function(children, #Children is a response body from one of the
 setMethod(f=".getDDSProjectId",
           signature="FileUpload",
           definition=function(Object){
-          dds = list()
           r = ddsRequest(customrequest="GET",
                          endpoint='/projects')
           #Notice could have multiple matches, but we only pull the first - is this the right thing to do?
