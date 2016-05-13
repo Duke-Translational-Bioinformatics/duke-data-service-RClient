@@ -87,3 +87,9 @@ setGeneric(name=".getLocalHash",
              standardGeneric(".getLocalHash")
            }
 )
+setGeneric(name=".createDDSFolders",
+           def=function(Object,...)
+           {
+             standardGeneric(".createDDSFolders")
+           }
+)

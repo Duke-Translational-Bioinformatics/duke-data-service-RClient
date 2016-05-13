@@ -21,19 +21,18 @@ ddsRequest<-function(
  if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
    url=.getCache('url')
    eval(parse(text=paste0('ddslogin("',url,'")')))
+   Sys.sleep(2)
  }
- message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
+ #message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {
   r = GET(paste0(url,endpoint),
-          add_headers(httpheader),
-          progress())
+          add_headers(httpheader))
 
  } else if (customrequest=="POST") {
    r = POST(paste0(url,endpoint),
            add_headers(httpheader),
            body=body_list,
-           encode="json",
-           progress(type="up"))
+           encode="json")
 
  }
   else if (customrequest=="PUT") {
@@ -44,8 +43,7 @@ ddsRequest<-function(
   }
   else if (customrequest=="DELETE") {
     r = DELETE(paste0(url,endpoint),
-            add_headers(httpheader),
-            progress())
+            add_headers(httpheader))
   }
   return(list('header'=r$header,
               'body'=content(r,'parsed'),
