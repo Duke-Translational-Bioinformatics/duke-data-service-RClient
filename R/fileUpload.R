@@ -31,6 +31,7 @@ setClass(
 #'
 #' @param file_folder The location (UNC path) of a file or folder to be uploaded
 #' @param project The DDS project to upload the payload.
+#' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
 #' ddsUpload(file_folder="/Users/nn31/Desktop/test_pics",project="Entomology Library")

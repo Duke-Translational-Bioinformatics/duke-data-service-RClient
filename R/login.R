@@ -7,8 +7,8 @@
 #' ddslogin()
 #' ddslogin(url='https://dukeds-uatest.herokuapp.com')
 
-ddslogin <- function(url=NA, rememberMe=TRUE) {
-  ddslogout();
+ddsLogin <- function(url=NA, rememberMe=TRUE) {
+  ddsLogout();
   #it's possible that the user will provide a url other than default, cache That
   if (!is.na(url)){.setCache('url',url);.setCache('askUserUrl',FALSE)}
   a <- new("Config")
@@ -60,7 +60,7 @@ ddslogin <- function(url=NA, rememberMe=TRUE) {
 #'
 #' @examples
 #' ddslogout()
-ddslogout <- function(){
+ddsLogout <- function(){
   .setCache('sa_api_token','')
   .setCache('sa_api_token_expires','')
   .setCache("url","https://dukeds-dev.herokuapp.com")

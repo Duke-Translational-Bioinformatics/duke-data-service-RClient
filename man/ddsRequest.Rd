@@ -4,8 +4,9 @@
 \alias{ddsRequest}
 \title{DDS RESTful API wrapper function.}
 \usage{
-ddsRequest(url = .getCache("url"), endpoint = NULL, body_list = NULL,
-  customrequest = "GET", httpheader = .getCache("curlHeader"), curlHandle)
+ddsRequest(url = paste0(.getCache("url"), "/api/v1"), endpoint = NULL,
+  body_list = NULL, customrequest = "GET",
+  httpheader = .getCache("curlheader"), curlHandle)
 }
 \arguments{
 \item{url}{The URL to a valid DDS portal (PROD,DEV,UATEST).}

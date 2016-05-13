@@ -20,7 +20,7 @@ ddsRequest<-function(
   ) {
  if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
    url=.getCache('url')
-   eval(parse(text=paste0('ddslogin("',url,'")')))
+   eval(parse(text=paste0('ddsLogin("',url,'")')))
    Sys.sleep(2)
  }
  #message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))

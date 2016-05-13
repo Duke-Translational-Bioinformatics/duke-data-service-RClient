@@ -5,7 +5,8 @@ import(xml2)
 
 ## S3 utility methods
 export(
-  "ddslogin",
-  "ddslogout",
-  "ddsRequest"
+  "ddsLogin",
+  "ddsLogout",
+  "ddsRequest",
+  "ddsUpload"
   )
