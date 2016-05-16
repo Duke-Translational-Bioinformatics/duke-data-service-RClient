@@ -16,12 +16,15 @@ ddsRequest<-function(
   body_list = NULL, # the request body
   customrequest="GET", # the request method
   httpheader=.getCache('curlheader'), # the headers
-  curlHandle # the curl handle
+  curlHandle, # the curl handle
+  pass = FALSE
   ) {
- if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
-   url=.getCache('url')
-   eval(parse(text=paste0('ddsLogin("',url,'")')))
-   Sys.sleep(2)
+ if (pass==FALSE) {
+   if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
+     url=.getCache('url')
+     eval(parse(text=paste0('ddsLogin("',url,'")')))
+     Sys.sleep(2)
+   }
  }
  #message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {

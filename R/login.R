@@ -84,7 +84,8 @@ ddsLogout <- function(){
   r = ddsRequest(customrequest="POST",
                  endpoint='/software_agents/api_token',
                  body_list=body,
-                 httpheader=.getCache('curlHeader'))
+                 httpheader=.getCache('curlHeader'),
+                 pass=TRUE)
   .setCache('sa_api_token',r$body$api_token)
   .setCache('sa_api_token_expires',r$body$expires_on)
 
@@ -93,10 +94,10 @@ ddsLogout <- function(){
 .getAndSetKeys <- function(endpoint) {
   msg1<-paste0(c("You don't have a software agent key cached.\n",
                  "This is an important token when working with programmtic clients.\n",
-                 "I'm going to redirect you to the DDS portal, please login and then\n",
+                 "I'm going to redirect your browser to the DDS portal, please login and then\n",
                  "provide the requested information. If you need additional assistance,\n",
                  "please use these instructions:\n",
-                 "https://github.com/Duke-GCB/DukeDSClient/blob/master/docs/GettingAgentAndUserKeys.md \n",
+                 "https://github.com/Duke-Translational-Bioinformatics/duke-data-service-RClient \n",
                  "Press Return to continue>>>>"),
                collapse="")
   ack <-readline(writeLines(msg1))

@@ -3,79 +3,56 @@ The official repo for the ddsRClient package - the R programmatic client to the 
 
 ![mail](images/logo2.png)
 
+### Table of contents
+- [Installation](#installation)
+- [Examples](#examples)
+  - [Login](#login)
+  - [Upload](#upload)
+
 ## Installation
-To install the R package ddsRClient, follow one of the methods below.
-### From GitHub  
-Start by installing the package:  
+To install the R package ddsRClient from GitHub:
 ```
 if (!require("devtools")) install.packages("devtools")
-devtools::install_github("Duke-Translational-Bioinformatics/duke-data-service-RClient")
+devtools::install_github("Duke-Translational-Bioinformatics/duke-data-service-RClient",
+ref="master")
 ```
-Load the package for use:  
+At any given time, we could be working on a new feature set. If you know the branch
+where the feature set is being development, switch `ref="master"` with the branch to
+get the latest updates.
+
+## Examples
+The following examples are here to help explore the functionality of the ddsRClient.
+
+### Login
+If you've never used the ddsRClient, the ddsLogin function is here to help you
+set up a configuration file that makes authentication to DDS easier. Here are the steps
+to get started:
 ```
 library(ddsRClient)
 ```
-Please read the TERMS OF USE NOTICE!!
-### Exploring Functionality
-The R client is a constant work in progress, to see what functions are available
-for use list all of the available functions:
+To learn more about logging in, check out the documentation. NOTE, if no URL is given
+ddsRClient assumes the development environment.
 ```
-ls("package:ddsRClient")
-```
-To learn more about any of these specific functions use the help menu:
-```
-?ddslogin
-```
-### Example: workflow to login to various DDS platforms
-If the url parameter of `ddslogin` is not used, it will default to our development
-environment. Otherwise, pass other portal platform URLs to login to other systems
-as such
-```
+?ddsLogin
+
 #development
-ddslogin()
-r = ddsRequest(customrequest="GET",
-               endpoint='/current_user',
-               httpheader=curlheader)
-r$status
-
-#UATEST
-ddslogin(url='https://dukeds-uatest.herokuapp.com')
-r = ddsRequest(customrequest="GET",
-               endpoint='/current_user',
-               httpheader=curlheader)
-r$status
-
-#PRODUCTION
-ddslogin(url='https://dukeds.herokuapp.com')
-r = ddsRequest(customrequest="GET",
-               endpoint='/current_user',
-               httpheader=curlheader)
-r$status
-
-#After a user has logged into these systems once. The url parameter is essentially
-#not needed if doing interactive programming as the client will present the
-#platforms that are saved, so all one needs to do is:
-ddslogin()
-r = ddsRequest(customrequest="GET",
-               endpoint='/current_user',
-               httpheader=curlheader)
-r$status
+ddsLogin()
 ```
+At this point, you will see the following screen:
+![mail](images/login_1.png)
+Press ENTER (return), your browser will open to DDS. Login and then follow these steps
+to get the requested authentication information:
+![mail](images/login_2.png)
+![mail](images/login_3.png)
+![mail](images/login_4.png)
+![mail](images/login_5.png)
 
-### Example: Workflow to create a new project in UATEST environment
-```
-library(ddsRClient)
-ddslogin(url='https://dukeds-uatest.herokuapp.com')
-body = list(name='ddsRClient project creation',
-            description='A project created with the R client')
-r = ddsRequest(customrequest="POST",
-               endpoint='/projects',
-               body_list=body,
-               httpheader=curlheader)
-r$status
-r$header
-r$body
-```
 As you can see, the power of the login function is in creation of the global
 variable `curlheader`. At this point in package development, the utility is that
 all of the caching, saving, and updating of the curlheader is done by our package.
+
+### Login
+The `ddsUpload` function can be used to upload files and/or folders. It can also
+be used to 'version' a file. If a file alread exists in the relative path
+of a DDS project, ddsUpload will check the MD5 hash of the file. If there is a discrepancy
+betweent the local filesystem and DDS, the file will be versioned within DDS.
