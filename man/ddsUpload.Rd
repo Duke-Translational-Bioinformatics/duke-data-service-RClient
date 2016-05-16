@@ -20,6 +20,6 @@ The URL of the resource available on DDS.
 DDS RESTful File Upload.
 }
 \examples{
-ddsUpload(file_folder="/Users/nn31/Desktop/test_pics",project="Entomology Library")
+ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
 }
 

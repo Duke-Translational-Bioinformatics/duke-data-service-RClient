@@ -34,7 +34,7 @@ setClass(
 #' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester/smallPMML.xml",project="UploadTester")
+#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -72,6 +72,8 @@ ddsUpload<-function(
   #We have valid input and the file/folder exists on the client
   #Let's obtain a list of files that need to be uploaded
   ################################################
+  message(sprintf('Collecting Information available on local disk for file/folder: %s.',fileupload@upload_object))
+  message("=====================================================================")
   if (fileupload@isfolder) {
     #we will use relative paths from here on, so stick with that
     user_dir <- getwd()
@@ -136,6 +138,8 @@ ddsUpload<-function(
       }
     }
   }
+  message("=====================================================================")
+  message(paste0("ddsUpload complete, project updates can now be viewed."))
 }
 
 setMethod(f=".createDDSFolders",
@@ -160,6 +164,7 @@ setMethod(f=".createDDSFolders",
               ids = paste0(base_dir_ids,'/',r$body$id)
               Object@dds$dirs = c(Object@dds$dirs,add_folder_list[i])
               Object@dds$dir_ids = c(Object@dds$dir_ids, ids)
+              message(sprintf('Adding folder %s(%s) to DDS within project %s(%s).',add_folder_list[i],r$body$id,Object@project,Object@projectid))
             } else {
               body = list("parent"=list("kind"="dds-project",
                                         "id"=Object@projectid),
@@ -248,6 +253,7 @@ setMethod(f=".createDDSFolders",
             r = ddsRequest(customrequest="POST",
                            endpoint=paste0('/files'),
                            body_list=body)
+            message(sprintf('Added file %s(%s):',filepath,r$body$id))
           } else {
             body = list('parent' = list("kind"="dds-folder",
                                         "id"=folder_id),
@@ -255,6 +261,7 @@ setMethod(f=".createDDSFolders",
             r = ddsRequest(customrequest="POST",
                            endpoint=paste0('/files'),
                            body_list=body)
+            message(sprintf('Added file %s(%s):',filepath,r$body$id))
           }
         } else {
           body = list('upload' = list('id' = upload_object_id),
@@ -262,6 +269,7 @@ setMethod(f=".createDDSFolders",
           r = ddsRequest(customrequest="PUT",
                          endpoint=paste0('/files/',file_id),
                          body_list=body)
+          message(sprintf('Versioned file %s(%s):',filepath,file_id))
 
           }
         },
@@ -349,6 +357,7 @@ parseChildren <- function(children, #Children is a response body from one of the
 setMethod(f=".getDDSProjectId",
           signature="FileUpload",
           definition=function(Object){
+          message(sprintf('Querying DDS for projects on DDS that match %s',Object@project))
           r = ddsRequest(customrequest="GET",
                          endpoint='/projects')
           dds = Object@dds
@@ -361,6 +370,7 @@ setMethod(f=".getDDSProjectId",
             #Now let's get all of the informaiton associated with this project
             r = ddsRequest(customrequest="GET",
                            endpoint=paste0('/projects/',projId,'/children'))
+            message(sprintf('Stepping through DDS project %s(%s).',Object@project,projId))
             if (length(r$body$results)>0) {
               dds = parseChildren(r$body$results)
             }
@@ -379,6 +389,7 @@ setMethod(f=".getDDSProjectId",
                            r$status))
             } else {
               projId = r$body$id
+              message(sprintf('Creating DDS project %s(%s):',Object@project,projId))
             }
           }
           out = list("projId"=projId,

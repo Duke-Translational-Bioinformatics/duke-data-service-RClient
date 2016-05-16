@@ -1,11 +1,11 @@
 #' Login function to DDS environment.
 #'
-#' @param url The URL to a valid DDS portal (PROD,DEV,UATEST).
-#' @param rememberME A logical indicating if the session login information should be stored later.
-#' @return The sum of \code{x} and \code{y}.
+#' @param url The URL to a valid DDS portal (https://dukeds.herokuapp.com,https://dukeds-dev.herokuapp.com,https://dukeds-uatest.herokuapp.com). Dev will be used if no url is given.
+#' @param rememberMe A logical indicating if the session login information should be stored later.
+#' @return ddsLogin will return with a message detailing where credentials can be found (i.e. variable curlheader).
 #' @examples
-#' ddslogin()
-#' ddslogin(url='https://dukeds-uatest.herokuapp.com')
+#' ddsLogin()
+#' ddsLogin(url='https://dukeds-uatest.herokuapp.com')
 
 ddsLogin <- function(url=NA, rememberMe=TRUE) {
   ddsLogout();
