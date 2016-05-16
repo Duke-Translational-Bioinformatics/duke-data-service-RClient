@@ -1,12 +1,13 @@
 ## imports from other packages
 import(httr)
 importFrom(digest,digest)
-import(xml2)
 
 ## S3 utility methods
 export(
   "ddsLogin",
   "ddsLogout",
   "ddsRequest",
-  "ddsUpload"
+  "ddsUpload",
+  ".setCache",
+  ".getCache"
   )

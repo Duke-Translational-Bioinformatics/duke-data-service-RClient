@@ -7,8 +7,7 @@
     PHI within the Duke Data Service is prohibited in this Alpha release. By proceeding, you attest that you
     will not enter PHI. If you are unclear about what constitutes PHI, or are uncertain about the nature of
     the data you use, please discontinue and contact the Duke University IT Security Office (security@duke.edu)
-    for further information..\n"
-
+    for further information."
     packageStartupMessage(tou)
   }
 
