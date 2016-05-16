@@ -34,7 +34,7 @@ setClass(
 #' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
+#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester/smallPMML.xml",project="UploadTester")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -52,10 +52,6 @@ ddsUpload<-function(
   ################################################
   if (!file.exists(fileupload@upload_object))
     stop(sprintf('File/Folder not found: %s',filepath))
-  #we will use relative paths from here on, so stick with that
-  user_dir <- getwd()
-  setwd(fileupload@upload_object)
-  on.exit(setwd(user_dir))
   ################################################
   #Before we process files locally, let's reach out
   #to DDS and see if/what is already there
@@ -77,9 +73,13 @@ ddsUpload<-function(
   #Let's obtain a list of files that need to be uploaded
   ################################################
   if (fileupload@isfolder) {
+    #we will use relative paths from here on, so stick with that
+    user_dir <- getwd()
+    setwd(fileupload@upload_object)
+    on.exit(setwd(user_dir))
     fileupload@local = .getFileNamesIntoList(fileupload)
   } else {
-    fileupload@local$filenames = fileupload@upload_object
+    fileupload@local = .getFileNamesIntoList(fileupload)
   }
   ################################################
   #Now we know what is local and dds, we can do
@@ -87,6 +87,7 @@ ddsUpload<-function(
   #folders that are on local, but not dds
   ################################################
   folders_to_add = setdiff(fileupload@local$dirs,fileupload@dds$dirs)
+  folders_to_add = folders_to_add[folders_to_add != ""]
   #creating folders on DDS and storing metadata in fileupload@dds
   if (length(folders_to_add)>0) {fileupload@dds = .createDDSFolders(fileupload,folders_to_add)}
   ################################################
@@ -271,16 +272,22 @@ setMethod(f=".getFileNamesIntoList",
           signature="FileUpload",
           definition=function(Object){
           # A method to fill in local metadata about file/directory structure
-          filenames         = list.files(recursive=TRUE,full.names=TRUE)
-          filenames         = gsub("^.|^./","",filenames)
-          filenames_full    = list.files(Object@upload_object,recursive=TRUE,full.names=TRUE)
-          filehashes        = sapply(filenames_full, function(x) digest(x,algo='md5',file=TRUE))
-          names(filenames) = filehashes
-          dirs              = list.dirs(recursive=TRUE,full.names=TRUE)
-          dirs              = gsub("^.|^./","",dirs)
-          dirs              = dirs[dirs != ""]
+          if (Object@isfolder) {
+            filenames         = list.files(recursive=TRUE,full.names=TRUE)
+            filenames         = gsub("^.|^./","",filenames)
+            filenames_full    = list.files(Object@upload_object,recursive=TRUE,full.names=TRUE)
+            filehashes        = sapply(filenames_full, function(x) digest(x,algo='md5',file=TRUE))
+            names(filenames) = filehashes
+            dirs              = list.dirs(recursive=TRUE,full.names=TRUE)
+            dirs              = gsub("^.|^./","",dirs)
+            dirs              = dirs[dirs != ""]
+          } else {
+            filenames         = basename(Object@upload_object)
+            names(filenames)  = digest(Object@upload_object,algo='md5',file=TRUE)
+            dirs              = Object@local$dirs
+          }
           return( list("filenames" =filenames,
-                       "dirs"       =dirs)
+                       "dirs"      =dirs)
                   )
 })
 
