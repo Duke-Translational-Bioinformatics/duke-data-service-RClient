@@ -34,7 +34,7 @@ setClass(
 #' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpload(file_folder="/Users/nn31/Desktop/test_pics",project="Entomology Library")
+#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -70,6 +70,7 @@ ddsUpload<-function(
   filehashes = unlist(dds_info$dds$filehashes)
   names(dds_info$dds$filenames) = filehashes
   fileupload@dds$filenames = dds_info$dds$filenames
+  fileupload@dds$fileids = dds_info$dds$fileids
 
   ################################################
   #We have valid input and the file/folder exists on the client
@@ -111,20 +112,30 @@ ddsUpload<-function(
   }
  }
   files_to_version = intersect(fileupload@local$filenames,fileupload@dds$filenames)
+  if (length(files_to_version)>0) {
+    for (i in 1:length(files_to_version)) {
+      #get the index
+      local_hash = names(fileupload@local$filenames[fileupload@local$filenames==files_to_version[i]])
+      dds_hash   = names(fileupload@dds$filenames[fileupload@dds$filenames==files_to_version[i]])
+      if (!(local_hash==dds_hash)) {
+        if (dirname(files_to_version[i])==".") {folderId=NULL}
+        else {
+          if (fileupload@dds$dirs[dirname(files_to_version[i])==fileupload@dds$dirs]==dirname(files_to_version[i])) {
+            folderId = fileupload@dds$dir_ids[dirname(files_to_version[i])==fileupload@dds$dirs]
+            folderId = basename(folderId)
+          }
+        }
+        .uploadFile(filepath = files_to_version[i],
+                    project_id = fileupload@projectid,
+                    file_hash = names(fileupload@local$filenames[fileupload@local$filenames==files_to_version[i]]),
+                    folder_id=folderId,
+                    chunksizeBytes=chunk_size_bytes,
+                    file_id=fileupload@dds$fileids[fileupload@dds$filenames==files_to_version[i]]
+        )
+      }
+    }
+  }
 }
-
-# .whichFileToAdd <- function() {
-#   #first, we'll gather all files that are on local but not dds
-#   files_to_add = setdiff(fileupload@local$filenames,fileupload@dds$filenames)
-#   #Next, let's check files that are on both to see if hashes match:
-#   same = intersect(fileupload@local$filenames,fileupload@dds$filenames)
-#   for (i in 1:length(same)) {
-#      if (names(which(same[i] == fileupload@local$filenames)) != names(which(same[i] == fileupload@dds$filenames))) {
-#        files_to_add = c(files_to_add,same[i])
-#      }
-#   }
-#   return(files_to_add)
-# }
 
 setMethod(f=".createDDSFolders",
           signature="FileUpload",
@@ -168,7 +179,8 @@ setMethod(f=".createDDSFolders",
                         project_id,
                         file_hash,
                         folder_id=NULL,
-                        chunksizeBytes=chunk_size_bytes) {
+                        chunksizeBytes=chunk_size_bytes,
+                        file_id=NULL) {
       ################################################
       #first order of business (per apiary blueprint) is to create an upload object within dds
       ################################################
@@ -226,22 +238,31 @@ setMethod(f=".createDDSFolders",
         ################################################
         #Complete the upload process by creating a file
         ################################################
-        if (is.null(folder_id)) {
-          body = list('parent' = list("kind"="dds-project",
-                                      "id"=project_id),
-                      'upload' = list("id"=upload_object_id))
+        if (is.null(file_id)) {
+          if (is.null(folder_id)) {
+            body = list('parent' = list("kind"="dds-project",
+                                        "id"=project_id),
+                        'upload' = list("id"=upload_object_id))
 
-          r = ddsRequest(customrequest="POST",
-                         endpoint=paste0('/files'),
-                         body_list=body)
+            r = ddsRequest(customrequest="POST",
+                           endpoint=paste0('/files'),
+                           body_list=body)
+          } else {
+            body = list('parent' = list("kind"="dds-folder",
+                                        "id"=folder_id),
+                        'upload' = list("id"=upload_object_id))
+            r = ddsRequest(customrequest="POST",
+                           endpoint=paste0('/files'),
+                           body_list=body)
+          }
         } else {
-          body = list('parent' = list("kind"="dds-folder",
-                                      "id"=folder_id),
-                      'upload' = list("id"=upload_object_id))
-          r = ddsRequest(customrequest="POST",
-                         endpoint=paste0('/files'),
+          body = list('upload' = list('id' = upload_object_id),
+                      'label' = 'File Version via ddsRClient')
+          r = ddsRequest(customrequest="PUT",
+                         endpoint=paste0('/files/',file_id),
                          body_list=body)
-        }
+
+          }
         },
         finally=close(connection)
       )
@@ -265,9 +286,10 @@ setMethod(f=".getFileNamesIntoList",
 
 parseChildren <- function(children, #Children is a response body from one of the following DDS endpoints: /projects/{id}/children or /folders/{id}/children
                           wtl = list(
-                            dirs = character(),
-                            dir_ids = character(),
-                            filenames = character(),
+                            dirs       = character(),
+                            dir_ids    = character(),
+                            filenames  = character(),
+                            fileids    = character(),
                             filehashes = character())
                           ){
   for (i in 1:length(children)) {
@@ -296,17 +318,20 @@ parseChildren <- function(children, #Children is a response body from one of the
         ################################################
         # CHANGE THIS POSSIBLY, depending on issue #9
         ################################################
-        file_info = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
+        file_info       = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
         #find out the index of where the parent lives in the directory base
-        ind     = which(temp$parent$id==basename(wtl$dir_ids))
-        wtl$filenames = c(wtl$filenames,paste0(wtl$dirs[ind],'/',temp$name))
-        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$upload$hash),"",file_info$body$upload$hash))
+        ind             = which(temp$parent$id==basename(wtl$dir_ids))
+        wtl$filenames   = c(wtl$filenames,paste0(wtl$dirs[ind],'/',temp$name))
+        wtl$fileids     = c(wtl$fileids,file_info$body$id)
+        wtl$filehashes  = c(wtl$filehashes,ifelse(is.null(file_info$body$current_version$upload$hash$value),"",file_info$body$current_version$upload$hash$value))
+
         #paste0('/',basename(fileupload@upload_object),'/',paste(names,collapse='/'))
       }
       else {
-        file_info = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
-        wtl$filenames = c(wtl$filenames,temp$name)
-        wtl$filehashes = c(wtl$filehashes,ifelse(is.null(file_info$body$current_version$upload$hash$value),"",file_info$body$current_version$upload$hash$value))
+        file_info        = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
+        wtl$filenames    = c(wtl$filenames,temp$name)
+        wtl$fileids      = c(wtl$fileids,file_info$body$id)
+        wtl$filehashes   = c(wtl$filehashes,ifelse(is.null(file_info$body$current_version$upload$hash$value),"",file_info$body$current_version$upload$hash$value))
         if (!(file_info$body$current_version$upload$hash$algorithm %in% c("","md5"))) {stop("DDS File contains hash that is not")}
       }
     }
