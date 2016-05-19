@@ -10,6 +10,6 @@ ddsLogout()
 Function to sign out of DDS. This amounts to removing the authorization jwt.
 }
 \examples{
-ddslogout()
+ddsLogout()
 }
 

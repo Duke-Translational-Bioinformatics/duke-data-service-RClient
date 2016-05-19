@@ -59,7 +59,7 @@ ddsLogin <- function(url=NA, rememberMe=TRUE) {
 #' Function to sign out of DDS. This amounts to removing the authorization jwt.
 #'
 #' @examples
-#' ddslogout()
+#' ddsLogout()
 ddsLogout <- function(){
   .setCache('sa_api_token','')
   .setCache('sa_api_token_expires','')

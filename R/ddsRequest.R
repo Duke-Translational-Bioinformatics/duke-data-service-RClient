@@ -7,8 +7,8 @@
 #' @param httpheader Takes an R list to supply as a modified header of a call
 #' @return The sum of \code{x} and \code{y}.
 #' @examples
-#' ddslogin()
-#' ddslogin(url='https://dukeds-uatest.herokuapp.com')
+#' ddsLogin()
+#' ddsLogin(url='https://dukeds-uatest.herokuapp.com')
 
 ddsRequest<-function(
   url=paste0(.getCache('url'),'/api/v1'), # omitting the endpoint

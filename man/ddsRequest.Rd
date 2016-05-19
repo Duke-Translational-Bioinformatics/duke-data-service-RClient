@@ -6,7 +6,7 @@
 \usage{
 ddsRequest(url = paste0(.getCache("url"), "/api/v1"), endpoint = NULL,
   body_list = NULL, customrequest = "GET",
-  httpheader = .getCache("curlheader"), curlHandle)
+  httpheader = .getCache("curlheader"), curlHandle, pass = FALSE)
 }
 \arguments{
 \item{url}{The URL to a valid DDS portal (PROD,DEV,UATEST).}
@@ -26,7 +26,7 @@ The sum of \code{x} and \code{y}.
 DDS RESTful API wrapper function.
 }
 \examples{
-ddslogin()
-ddslogin(url='https://dukeds-uatest.herokuapp.com')
+ddsLogin()
+ddsLogin(url='https://dukeds-uatest.herokuapp.com')
 }
 
