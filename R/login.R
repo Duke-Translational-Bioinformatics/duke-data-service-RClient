@@ -86,6 +86,7 @@ ddsLogout <- function(){
                  body_list=body,
                  httpheader=.getCache('curlHeader'),
                  pass=TRUE)
+  if (r$status!=201) {stop(sprintf("It appears that one of the keys entered does not match the environment %s, please try again.",.getCache('url')))}
   .setCache('sa_api_token',r$body$api_token)
   .setCache('sa_api_token_expires',r$body$expires_on)
 

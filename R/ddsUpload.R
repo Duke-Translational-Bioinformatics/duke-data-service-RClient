@@ -5,7 +5,7 @@
 #' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
+#' ddsUpload(file_folder="/Users/nn/Desktop/uplo.ad_tester",project="UploadTester")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -43,16 +43,18 @@ ddsUpload<-function(
   #We have valid input and the file/folder exists on the client
   #Let's obtain a list of files that need to be uploaded
   ################################################
-  message(sprintf('Collecting Information available on local disk for file/folder: %s.',transaction@local_object))
-  message("=====================================================================")
   if (transaction@isfolder) {
     #we will use relative paths from here on, so stick with that
     user_dir <- getwd()
     setwd(transaction@local_object)
     on.exit(setwd(user_dir))
     transaction@local = .getFileNamesIntoList(transaction)
+    transaction@local$filenames = unlist(transaction@local$filenames)
+    transaction@local$dirs = unlist(transaction@local$dirs)
   } else {
     transaction@local = .getFileNamesIntoList(transaction)
+    transaction@local$filenames = unlist(transaction@local$filenames)
+    transaction@local$dirs = unlist(transaction@local$dirs)
   }
   ################################################
   #Now we know what is local and dds, we can do
@@ -119,6 +121,7 @@ ddsUpload<-function(
                         folder_id=NULL,
                         chunksizeBytes=chunk_size_bytes,
                         file_id=NULL) {
+      if (is.null(file_id)) {message(sprintf('Adding file %s:',filepath)) } else {  message(sprintf('Versioning file %s:',filepath)) }
       ################################################
       #first order of business (per apiary blueprint) is to create an upload object within dds
       ################################################
@@ -185,7 +188,6 @@ ddsUpload<-function(
             r = ddsRequest(customrequest="POST",
                            endpoint=paste0('/files'),
                            body_list=body)
-            message(sprintf('Added file %s(%s):',filepath,r$body$id))
           } else {
             body = list('parent' = list("kind"="dds-folder",
                                         "id"=folder_id),
@@ -193,7 +195,6 @@ ddsUpload<-function(
             r = ddsRequest(customrequest="POST",
                            endpoint=paste0('/files'),
                            body_list=body)
-            message(sprintf('Added file %s(%s):',filepath,r$body$id))
           }
         } else {
           body = list('upload' = list('id' = local_object_id),
@@ -201,8 +202,6 @@ ddsUpload<-function(
           r = ddsRequest(customrequest="PUT",
                          endpoint=paste0('/files/',file_id),
                          body_list=body)
-          message(sprintf('Versioned file %s(%s):',filepath,file_id))
-
           }
         },
         finally=close(connection)

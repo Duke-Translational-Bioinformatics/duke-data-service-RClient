@@ -122,16 +122,7 @@ setMethod(f=".setConfig",
               eval(parse(text=ToParse))
               return(Object)
              } else if ((length(indx)>0) & (.getCache('askUserUrl')==TRUE)){
-               #.urls_list = unlist(lapply(seq_along(config_list$url$V2),function(x) paste0(x,') ',config_list$url$V2[x],'\n')))
-               #msg1<-paste0(c("You've cached at least one url in the past.\n",
-               #               .urls_list,
-               #               "Please enter the number of the url to use:"),
-               #             collapse="")
-               #url_indx <-readline(writeLines(msg1))
-               #if (!url_indx %in% (1:length(.urls_list))) {
-                 #message(sprintf("Proper input not received, defaulting to %s",.urls_list[1]))
-                 url_indx<-1
-               #          }
+               url_indx<-indx
                chosen <- do.call("rbind",lapply(config_list,function(x) data.frame(x[as.numeric(url_indx),])))
                #Assuming only one software agent per url, but that will change enter code here
                #when that change is made

@@ -39,6 +39,8 @@ setMethod(f=".createDDSFolders",
 setMethod(f=".getFileNamesIntoList",
           signature="transaction",
           definition=function(Object){
+            message(sprintf('Collecting Information available on local disk for file/folder: %s.',Object@local_object))
+            message("=====================================================================")
             # A method to fill in local metadata about file/directory structure
             if (Object@isfolder) {
               filenames         = list.files(recursive=TRUE,full.names=TRUE)
@@ -54,8 +56,8 @@ setMethod(f=".getFileNamesIntoList",
               names(filenames)  = digest(Object@local_object,algo='md5',file=TRUE)
               dirs              = Object@local$dirs
             }
-            return( list("filenames" =filenames,
-                         "dirs"      =dirs)
+            return( list("filenames" = ifelse(length(filenames)==0,"",list(filenames)),
+                         "dirs"      = ifelse(length(dirs)==0,"",list(dirs)))
             )
 })
 
@@ -75,7 +77,6 @@ parseChildren <- function(children, #Children is a response body from one of the
         ind     = which(temp$parent$id==basename(wtl$dir_ids))
         wtl$dirs    = c(wtl$dirs,paste0(wtl$dirs[ind],'/',temp$name))
         wtl$dir_ids  = c(wtl$dir_ids,paste0(wtl$dir_ids[ind],'/',temp$id))
-        #paste0('/',basename(transaction@local_object),'/',paste(names,collapse='/'))
       } else {
         wtl$dirs    = c(wtl$dirs,temp$name)
         wtl$dir_ids = c(wtl$dir_ids,temp$id)
@@ -99,8 +100,6 @@ parseChildren <- function(children, #Children is a response body from one of the
         wtl$filenames   = c(wtl$filenames,paste0(wtl$dirs[ind],'/',temp$name))
         wtl$fileids     = c(wtl$fileids,file_info$body$id)
         wtl$filehashes  = c(wtl$filehashes,ifelse(is.null(file_info$body$current_version$upload$hash$value),"",file_info$body$current_version$upload$hash$value))
-
-        #paste0('/',basename(transaction@local_object),'/',paste(names,collapse='/'))
       }
       else {
         file_info        = ddsRequest(customrequest="GET",endpoint=paste0('/files/',temp$id))
@@ -154,8 +153,8 @@ setMethod(f=".getDDSProjectId",
                 message(sprintf('Creating DDS project %s(%s):',Object@project,projId))
               }
             }
-            if (sum(duplicated(dds$dirs))>0) {stop(sprintf("'%s' contains duplicate folder structures, this is supported within DDS portal, but not the R Client (at this time).", transaction@project))}
-            if (sum(duplicated(dds$filenames))>0) {stop(sprintf("'%s' contains duplicate file structures, this is supported within DDS portal, but not the R Client (at this time).", transaction@project))}
+            if (sum(duplicated(dds$dirs))>0) {stop(sprintf("'%s' contains duplicate folder structures, this is supported within DDS portal, but not the R Client (at this time).", Object@project))}
+            if (sum(duplicated(dds$filenames))>0) {stop(sprintf("'%s' contains duplicate file structures, this is supported within DDS portal, but not the R Client (at this time).", Object@project))}
             out = list("projId"=projId,
                        "dds"=dds)
             return(out)

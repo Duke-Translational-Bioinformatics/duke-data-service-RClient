@@ -93,3 +93,9 @@ setGeneric(name=".createDDSFolders",
              standardGeneric(".createDDSFolders")
            }
 )
+setGeneric(name=".createLocalFolders",
+           def=function(Object,...)
+           {
+             standardGeneric(".createLocalFolders")
+           }
+)
