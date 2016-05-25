@@ -8,6 +8,5 @@ export(
   "ddsLogout",
   "ddsRequest",
   "ddsUpload",
-  ".setCache",
-  ".getCache"
+  "ddsDownload"
   )

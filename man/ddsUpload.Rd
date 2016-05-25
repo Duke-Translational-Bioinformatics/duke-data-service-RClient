@@ -20,6 +20,6 @@ The URL of the resource available on DDS.
 DDS RESTful File Upload.
 }
 \examples{
-ddsUpload(file_folder="/Users/nn/Desktop/upload_tester",project="UploadTester")
+ddsUpload(file_folder="/Users/nn/Desktop/uplo.ad_tester",project="UploadTester")
 }
 
