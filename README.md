@@ -8,6 +8,7 @@ The official repo for the ddsRClient package - the R programmatic client to the 
 - [Examples](#examples)
   - [Login](#login)
   - [Upload](#upload)
+  - [Download](#download)
 
 ## Installation
 To install the R package ddsRClient from GitHub:
@@ -62,3 +63,8 @@ ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
 #if files are changed within this folder structure, another call will version
 #changed files
 ddsUpload(file_folder="/Users/nn31/Desktop/UploadTester",project="UploadTester")
+```
+
+### download
+The `ddsDownload` function can be used to download a DDS project's files and folders
+onto a client accessible file system.
