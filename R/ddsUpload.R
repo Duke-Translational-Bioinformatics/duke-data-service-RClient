@@ -5,7 +5,7 @@
 #' @param chunk_size_bytes If determined that files need to be uploaded, specify upload chunk size here.
 #' @return The URL of the resource available on DDS.
 #' @examples
-#' ddsUpload(file_folder="/Users/nn/Desktop/uplo.ad_tester",project="UploadTester")
+#' ddsUpload(file_folder="/Users/nn31/Desktop/upload_testers",project="UploadTester")
 
 ddsUpload<-function(
   file_folder=NULL,
@@ -133,8 +133,6 @@ ddsUpload<-function(
       r = ddsRequest(customrequest="POST",
                  endpoint=paste0('/projects/',project_id,'/uploads'),
                  body_list=body)
-      if (r$status!=201)
-        stop(sprintf('in .uploadFile(): endpoint /project/%s/uploads failed with %s',project_id,r$status))
       local_object_id = r$body$id
       chunkNumber <- 1 # service requires that chunk number be >0
       connection<-file(filepath, open="rb")

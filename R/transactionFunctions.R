@@ -16,7 +16,6 @@ setMethod(f=".createDDSFolders",
                 r = ddsRequest(customrequest="POST",
                                endpoint=paste0('/folders'),
                                body_list=body)
-                if (r$status != 201) {stop(".createDDSFolders, couldn't create folder for upload")}
                 ids = paste0(base_dir_ids,'/',r$body$id)
                 Object@dds$dirs = c(Object@dds$dirs,add_folder_list[i])
                 Object@dds$dir_ids = c(Object@dds$dir_ids, ids)
@@ -28,7 +27,6 @@ setMethod(f=".createDDSFolders",
                 r = ddsRequest(customrequest="POST",
                                endpoint=paste0('/folders'),
                                body_list=body)
-                if (r$status != 201) {stop(".createDDSFolders, couldn't create folder for upload")}
                 Object@dds$dirs = c(Object@dds$dirs,add_folder_list[i])
                 Object@dds$dir_ids = c(Object@dds$dir_ids, r$body$id)
               }
@@ -135,23 +133,14 @@ setMethod(f=".getDDSProjectId",
               if (length(r$body$results)>0) {
                 dds = parseChildren(r$body$results)
               }
-              #We need to create a metadata configuration for file/structure and file/information
-
             } else {
               body = list(name=Object@project,
                           description=paste0(Object@project," via R Client .getProjectId()"))
               r = ddsRequest(customrequest="POST",
                              endpoint='/projects',
                              body_list=body)
-              if (r$status!=201) {
-                stop(sprintf('.getProjectId() failed to create project "%s" on resource %s with status %s',
-                             Object@project,
-                             .getCache('url'),
-                             r$status))
-              } else {
                 projId = r$body$id
                 message(sprintf('Creating DDS project %s(%s):',Object@project,projId))
-              }
             }
             if (sum(duplicated(dds$dirs))>0) {stop(sprintf("'%s' contains duplicate folder structures, this is supported within DDS portal, but not the R Client (at this time).", Object@project))}
             if (sum(duplicated(dds$filenames))>0) {stop(sprintf("'%s' contains duplicate file structures, this is supported within DDS portal, but not the R Client (at this time).", Object@project))}

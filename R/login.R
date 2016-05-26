@@ -1,13 +1,14 @@
 #' Login function to DDS environment.
 #'
 #' @param url The URL to a valid DDS portal (https://dukeds.herokuapp.com,https://dukeds-dev.herokuapp.com,https://dukeds-uatest.herokuapp.com). Dev will be used if no url is given.
-#' @param rememberMe A logical indicating if the session login information should be stored later.
+#' @param silent A logical indicating if the session login information should be communicated through standard output.
 #' @return ddsLogin will return with a message detailing where credentials can be found (i.e. variable curlheader).
 #' @examples
 #' ddsLogin()
 #' ddsLogin(url='https://dukeds-uatest.herokuapp.com')
 
-ddsLogin <- function(url=NA, rememberMe=TRUE) {
+ddsLogin <- function(url=NA,
+                     silent=FALSE) {
   ddsLogout();
   #it's possible that the user will provide a url other than default, cache That
   if (!is.na(url)){.setCache('url',url);.setCache('askUserUrl',FALSE)}
@@ -28,30 +29,26 @@ ddsLogin <- function(url=NA, rememberMe=TRUE) {
     #refreshing our sa_api_token
     .setCache('sa_api_token_expires',as.character(as.integer(as.POSIXct( Sys.time() ))))
     .getAndSetToken();
-    #We're now "logged in", if rememberMe is true, we need to write out to the config file
     #################################################################################################
-    if (rememberMe) {
-      #update our config option to reflect what our cache now holds
-      a=.loadConfigFromCache(a)
-      .saveConfig(a)
-    }
+    #update our config option to reflect what our cache now holds
+    a=.loadConfigFromCache(a)
+    .saveConfig(a)
   } else {
     ##reworking this workflow to align with the python client
     .getAndSetKeys(.getCache('url'));
     .getAndSetToken();
     .getUserInformation();
-    #We're now "logged in", if rememberMe is true, we need to write out to the config file
     #################################################################################################
-    if (rememberMe) {
-      #update our config option to reflect what our cache now holds
-      a=.loadConfigFromCache(a)
-      .saveConfig(a)
-    }
+    #update our config option to reflect what our cache now holds
+    a=.loadConfigFromCache(a)
+    .saveConfig(a)
   }
 
   #Welcome the user and let them know they're logged in and remind them which system they are using
   #################################################################################################
-  message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))
+  if (silent==FALSE) {
+    message(sprintf("Welcome %s %s - you are logged into %s! Please use the global variable 'curlheader' to call DDS endpoints.",.getCache('first_name'),.getCache('last_name'),.getCache('url')))
+  }
   assign("curlheader", c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')), envir = .GlobalEnv)
   .setCache("curlheader",c(.getCache('curlHeader'),'Authorization'=.getCache('sa_api_token')))
 }
@@ -86,7 +83,6 @@ ddsLogout <- function(){
                  body_list=body,
                  httpheader=.getCache('curlHeader'),
                  pass=TRUE)
-  if (r$status!=201) {stop(sprintf("It appears that one of the keys entered does not match the environment %s, please try again.",.getCache('url')))}
   .setCache('sa_api_token',r$body$api_token)
   .setCache('sa_api_token_expires',r$body$expires_on)
 

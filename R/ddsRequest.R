@@ -17,14 +17,11 @@ ddsRequest<-function(
   customrequest="GET", # the request method
   httpheader=.getCache('curlheader'), # the headers
   curlHandle, # the curl handle
-  pass = FALSE
+  pass = FALSE #login uses ddsRequest and so we have to bypass the checking of global variables
   ) {
+
  if (pass==FALSE) {
-   if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))) {
-     url=.getCache('url')
-     eval(parse(text=paste0('ddsLogin("',url,'")')))
-     Sys.sleep(2)
-   }
+   .verifyAuth(pass)
  }
  #message(sprintf("%s %s progress:",customrequest,paste0(url,'/api/v1',endpoint)))
  if (customrequest=="GET") {
@@ -48,10 +45,35 @@ ddsRequest<-function(
     r = DELETE(paste0(url,endpoint),
             add_headers(httpheader))
   }
+  if (!r$status_code %in% c(200,201)) {
+    .checkDDSResponseStatus(endpoint,content(r,'parsed'));
+  }
   return(list('header'=r$header,
               'body'=content(r,'parsed'),
               'status'=r$status,
               'request'=r$request
               )
          )
+}
+
+.verifyAuth <- function(pass) {
+  if (is.null(.getCache('sa_api_token_expires')))  {
+    url=.getCache('url')
+    eval(parse(text=paste0('ddsLogin("',url,'")')))
+    Sys.sleep(2)
+  }
+  else if (.getCache('sa_api_token_expires')=="") {
+    url=.getCache('url')
+    eval(parse(text=paste0('ddsLogin("',url,'")')))
+    Sys.sleep(2)
+  }
+  else if (as.numeric(.getCache('sa_api_token_expires')) < as.integer(as.POSIXct( Sys.time() ))){
+    url=.getCache('url')
+    eval(parse(text=paste0('ddsLogin("',url,'")')))
+    Sys.sleep(2)
+  }
+}
+
+.checkDDSResponseStatus <- function(endpoint,body) {
+    stop(sprintf('Endpoint %s is throwing error %s because "%s". Try: %s.',endpoint,body$error,body$reason,body$suggestion))
 }
