@@ -46,7 +46,6 @@ to get the requested authentication information:
 ![mail](images/login_2.png)
 ![mail](images/login_3.png)
 ![mail](images/login_4.png)
-![mail](images/login_5.png)
 
 The power of the login function is in creation of the global
 variable `curlheader` and also caching credentials for `ddsRequest`.
